@@ -4,17 +4,13 @@ class TransitionDefinition<E extends Event> {
   /// The state this transition is attached to.
   final StateNode<State> fromStateNode;
 
-  final GuardConditionFunction<E>? condition;
-  final List<ActionFunction<E>>? actions;
-  final String? conditionLabel;
-  final String? sideEffectLabel;
+  final GuardCondition<E>? condition;
+  final List<Action<E>>? actions;
 
   TransitionDefinition({
     required this.fromStateNode,
     required this.condition,
     required this.actions,
-    required this.conditionLabel,
-    required this.sideEffectLabel,
   });
 }
 
@@ -23,18 +19,14 @@ class OnTransitionDefinition<S extends State, E extends Event,
   /// If this [OnTransitionDefinition] is trigger [toState] will be the new [State]
   Type toState;
 
-  OnTransitionDefinition(
-    StateNode stateNode,
-    GuardConditionFunction<E>? condition,
-    this.toState,
-    List<ActionFunction<E>>? actions, {
-    String? conditionLabel,
-    String? sideEffectLabel,
+  OnTransitionDefinition({
+    required StateNode fromState,
+    GuardCondition<E>? condition,
+    required this.toState,
+    List<Action<E>>? actions,
   }) : super(
-          fromStateNode: stateNode,
+          fromStateNode: fromState,
           condition: condition,
           actions: actions,
-          conditionLabel: conditionLabel,
-          sideEffectLabel: sideEffectLabel,
         );
 }

@@ -105,7 +105,7 @@ void main() {
           (b) => b..on<OnMelted, Liquid>(),
         )
         ..state<Liquid>((b) => b),
-      onTransition: ((from, event, to) => transitions.add([from, event, to])),
+      onTransition: (from, event, to) => transitions.add([from, event, to]),
     );
 
     final event = OnMelted();
