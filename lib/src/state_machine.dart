@@ -1,41 +1,51 @@
+import 'package:state_machine/src/state_value.dart';
 import 'package:state_machine/src/types.dart';
 
 import 'state_node.dart';
 
-typedef BuildGraph = void Function(StateNode);
-
-abstract class RootStateNode extends State {}
+abstract class RootState extends State {}
 
 class InitialEvent extends Event {}
 
-typedef OnTransitionFunction = void Function(Type from, Event e, Type to);
+typedef OnTransitionCallback = void Function(Type from, Event e, Type to);
 
 class StateMachine {
+  /// TODO: we either have a tree of [StateValue] or follow through the
+  ///  the graph of [StateNodeDefinition] and check the
+  /// [StateNodeDefinition.activeStateNode] of each node
+  late StateValue value;
+
+  /// TODO: currently we use this a the currently active state node, but this
+  ///  won't work in nested states and coregions. we should make this a
+  ///  rootNode.
   late StateNodeDefinition currentStateNode;
-  OnTransitionFunction? onTransition;
+
+  /// The [OnTransitionCallback] will be called on every state transition the
+  /// [StateMachine] performs.
+  OnTransitionCallback? onTransition;
 
   StateMachine._(
     StateNodeDefinition rootNode, {
     this.onTransition,
   }) {
     rootNode.start();
-    currentStateNode = rootNode.currentStateNode!;
+
+    /// TODO: right now assumes a single active state node, fix for the
+    ///  coregions.
+    currentStateNode = rootNode.activeStateNode!.first;
+    value = StateValue(stateNode: rootNode.activeStateNode!.first);
     currentStateNode.enter(rootNode, InitialEvent());
   }
 
-  /// Creates a statemachine using a builder pattern.
+  /// Creates a [StateMachine] using a builder pattern.
   factory StateMachine.create(
-    BuildGraph buildGraph, {
-    OnTransitionFunction? onTransition,
+    void Function(StateNode) buildGraph, {
+    OnTransitionCallback? onTransition,
   }) {
-    final rootNode = StateNodeDefinition<RootStateNode>();
+    final rootNode = StateNodeDefinition<RootState>();
     buildGraph(rootNode);
 
-    final machine = StateMachine._(
-      rootNode,
-      onTransition: onTransition,
-    );
-    return machine;
+    return StateMachine._(rootNode, onTransition: onTransition);
   }
 
   void send<E extends Event>(E event) {
@@ -58,10 +68,10 @@ class StateMachine {
 
     currentStateNode.enter(fromState, event);
 
-    onTransition?.call(fromState.currentState, event, toState.currentState);
+    onTransition?.call(fromState.stateType, event, toState.stateType);
   }
 
   bool isInState<S>() {
-    return currentStateNode.currentState == S;
+    return currentStateNode.stateType == S;
   }
 }
