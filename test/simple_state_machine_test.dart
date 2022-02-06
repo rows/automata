@@ -34,30 +34,30 @@ void main() {
 
     final machine = StateMachine.create(
       (g) => g
-        ..initialState<Solid>()
+        ..initial<Solid>()
         ..state<Solid>(
-          (b) => b
+          builder: (b) => b
             ..on<OnMelted, Liquid>()
-            ..onEnter((fromState, event) {
+            ..onEnter((event) {
               calls.add('onEnterSolid');
             })
-            ..onExit((fromState, event) {
+            ..onExit((event) {
               calls.add('onExitSolid');
             }),
         )
         ..state<Liquid>(
-          (b) => b
+          builder: (b) => b
             ..on<OnFroze, Solid>()
             ..on<OnVaporized, Gas>()
-            ..onEnter((fromState, event) {
+            ..onEnter((event) {
               calls.add('onEnterLiquid');
             })
-            ..onExit((fromState, event) {
+            ..onExit((event) {
               calls.add('onExitLiquid');
             }),
         )
         ..state<Gas>(
-          (b) => b..on<OnCondensed, Liquid>(),
+          builder: (b) => b..on<OnCondensed, Liquid>(),
         ),
     );
 
@@ -72,14 +72,14 @@ void main() {
     var enabled = false;
     final machine = StateMachine.create(
       (g) => g
-        ..initialState<Solid>()
+        ..initial<Solid>()
         ..state<Solid>(
-          (b) => b
+          builder: (b) => b
             ..on<OnMelted, Liquid>(
               condition: (event) => enabled,
             ),
         )
-        ..state<Liquid>((b) => b),
+        ..state<Liquid>(),
     );
 
     expect(machine.isInState<Solid>(), isTrue);
@@ -100,11 +100,11 @@ void main() {
     final transitions = [];
     final machine = StateMachine.create(
       (g) => g
-        ..initialState<Solid>()
+        ..initial<Solid>()
         ..state<Solid>(
-          (b) => b..on<OnMelted, Liquid>(),
+          builder: (b) => b..on<OnMelted, Liquid>(),
         )
-        ..state<Liquid>((b) => b),
+        ..state<Liquid>(),
       onTransition: (from, event, to) => transitions.add([from, event, to]),
     );
 
@@ -114,13 +114,13 @@ void main() {
     expect(transitions.first, equals([Solid, event, Liquid]));
   });
 
-  test('should call side effects', () {
+  test('should call actions on transition', () {
     final effects = [];
     final machine = StateMachine.create(
       (g) => g
-        ..initialState<Solid>()
+        ..initial<Solid>()
         ..state<Solid>(
-          (b) => b
+          builder: (b) => b
             ..on<OnMelted, Liquid>(
               actions: [
                 (e) => effects.add('sideeffect_1'),
@@ -128,7 +128,7 @@ void main() {
               ],
             ),
         )
-        ..state<Liquid>((b) => b),
+        ..state<Liquid>(),
     );
 
     machine.send(OnMelted());
@@ -140,17 +140,17 @@ void main() {
 StateMachine _createMachine<S extends State>() {
   return StateMachine.create(
     (g) => g
-      ..initialState<Solid>()
+      ..initial<Solid>()
       ..state<Solid>(
-        (b) => b..on<OnMelted, Liquid>(),
+        builder: (b) => b..on<OnMelted, Liquid>(),
       )
       ..state<Liquid>(
-        (b) => b
+        builder: (b) => b
           ..on<OnFroze, Solid>()
           ..on<OnVaporized, Gas>(),
       )
       ..state<Gas>(
-        (b) => b..on<OnCondensed, Liquid>(),
+        builder: (b) => b..on<OnCondensed, Liquid>(),
       ),
   );
 }

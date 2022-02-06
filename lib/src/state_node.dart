@@ -1,7 +1,7 @@
-import 'package:state_machine/src/types.dart';
-
 import '../state_machine.dart';
 import 'transition_definition.dart';
+
+enum StateNodeType { atomic, parallel, terminal }
 
 /// Internal definition of a [StateNode].
 ///
@@ -19,7 +19,35 @@ class StateNodeDefinition<S extends State> implements StateNode {
   ///
   /// TODO: this should be a list, as when you are in a coregion you should
   ///  have multiple active states at the same time.
-  List<StateNodeDefinition>? activeStateNode;
+  List<StateNodeDefinition>? _activeStateNodes;
+
+  List<StateNodeDefinition>? get activeStateNodes => _activeStateNodes;
+
+  void setActiveStateNodes({
+    List<StateNodeDefinition>? nodes,
+    required Event event,
+  }) {
+    final previousNodes = _activeStateNodes ?? [];
+    for (final node in previousNodes) {
+      node._onExitAction?.call(event);
+    }
+
+    _activeStateNodes = nodes;
+
+    final nextNodes = nodes ?? [];
+    for (final node in nextNodes) {
+      if (node.stateNodeType == StateNodeType.parallel) {
+        node._activeStateNodes = node.childNodes;
+        for (final childNode in node.childNodes) {
+          childNode.send(InitialEvent());
+        }
+      } else {
+        node.send(InitialEvent());
+      }
+
+      node._onEnterAction?.call(event);
+    }
+  }
 
   /// The parent [StateNodeDefinition].
   StateNodeDefinition? parentNode;
@@ -37,57 +65,36 @@ class StateNodeDefinition<S extends State> implements StateNode {
   /// Action invoked on exit this [StateNodeDefinition].
   OnExitAction? _onExitAction;
 
-  /// Set to true if this [StateNodeDefinition] is a orthogonal region, here
-  /// referred as concurrent region.
-  final bool isCoregion;
+  /// Define the [StateNodeType] of this [StateNode].
+  final StateNodeType stateNodeType;
 
   StateNodeDefinition({
     this.parentNode,
-    this.isCoregion = false,
+    this.stateNodeType = StateNodeType.atomic,
   }) : stateType = S;
 
   /// A state is a leaf state if it has no child states.
   bool get isLeaf => childNodes.isEmpty;
 
-  void start() {
-    if (!isCoregion) {
-      final active = childNodes.firstWhere(
-        (element) => element.stateType == _initialState,
-      );
-
-      activeStateNode = [active];
-      if (active._initialState != null) {
-        active.start();
-      }
-    } else {
-      // TODO: implement coregion initial state
-    }
-  }
-
   /// Sets initial State.
   @override
-  void initialState<I extends State>({String? label}) {
+  void initial<I extends State>({String? label}) {
     _initialState = I;
   }
 
   /// Attach a [StateNodeDefinition].
   @override
-  void state<I extends State>(BuildState buildState) {
-    final newStateNode = StateNodeDefinition<I>(parentNode: this);
-    childNodes.add(newStateNode);
-    buildState(newStateNode);
-  }
-
-  /// Attach a [StateNodeDefinition] marked as concurrent region.
-  @override
-  void coregion<I extends State>(BuildState buildState) {
+  void state<I extends State>({
+    BuildState? builder,
+    StateNodeType type = StateNodeType.atomic,
+  }) {
     final newStateNode = StateNodeDefinition<I>(
       parentNode: this,
-      isCoregion: true,
+      stateNodeType: type,
     );
 
     childNodes.add(newStateNode);
-    buildState(newStateNode);
+    builder?.call(newStateNode);
   }
 
   /// Attach a [OnTransitionDefinition] to allow to transition from this
@@ -119,46 +126,87 @@ class StateNodeDefinition<S extends State> implements StateNode {
     _onExitAction = onExit;
   }
 
-  /// Execute the onEnter action for this [StateNode].
-  void enter(StateNodeDefinition fromState, Event event) {
-    _onEnterAction?.call(fromState.stateType, event);
-  }
+  StateNodeDefinition? _getInitialStateNode() {
+    if (_initialState == null) {
+      return null;
+    }
 
-  /// Execute the onExit action for this [StateNode].
-  void exit(StateNodeDefinition toState, Event event) {
-    _onExitAction?.call(toState.stateType, event);
+    if (stateNodeType == StateNodeType.parallel) {
+      throw UnimplementedError();
+    }
+
+    final stateNode = childNodes.firstWhere(
+      (element) => element.stateType == _initialState,
+    );
+
+    return stateNode;
   }
 
   /// Execute an event on this [StateNode] if any present [condition] is
   /// evaluated as true and a valid destination [StateNode] is found.
-  SendResult? send<E extends Event>(E event) {
-    final parent = parentNode;
-    final transition = _eventTransitionsMap[event.runtimeType];
-    if (transition == null || parent == null) {
-      return null;
-    }
-
-    if (transition is OnTransitionDefinition) {
-      // TODO: weird type runtime errors, fsm2 seems to run into the same issue
-      final dynamic t = transition;
-      if ((t.condition as dynamic) != null && !t.condition!(event)) {
-        return null;
+  void send<E extends Event>(E event, {OnTransitionCallback? onTransition}) {
+    if (E == InitialEvent) {
+      final stateNode = _getInitialStateNode();
+      if (stateNode == null) {
+        return;
       }
 
-      final stateNode = parent.childNodes.firstWhere(
-        (element) => element.stateType == transition.toState,
-      );
+      // TODO: check if we are setting all initial states as active??
+      stateNode.send(event, onTransition: onTransition);
+      setActiveStateNodes(nodes: [stateNode], event: event);
 
-      return SendResult(stateNode: stateNode, transition: transition);
+      return;
     }
 
-    return null;
+    final parent = parentNode;
+    final transition = _eventTransitionsMap[event.runtimeType];
+    if (transition != null && parent != null) {
+      if (transition is OnTransitionDefinition) {
+        // TODO: weird type runtime errors, fsm2 seems to run into the same issue
+        final dynamic t = transition;
+        if ((t.condition as dynamic) != null && !t.condition!(event)) {
+          return;
+        }
+
+        if (stateNodeType == StateNodeType.parallel) {
+          final stateNode = childNodes.firstWhere(
+            (element) => element.stateType == transition.toState,
+          );
+
+          final newNodes = [
+            stateNode,
+            ...activeStateNodes?.where((node) => node != stateNode) ??
+                <StateNodeDefinition<State>>[],
+          ];
+
+          setActiveStateNodes(nodes: newNodes, event: event);
+          onTransition?.call(stateType, event, stateNode.stateType);
+        } else {
+          final stateNode = parent.childNodes.firstWhere(
+            (element) => element.stateType == transition.toState,
+          );
+
+          parent.setActiveStateNodes(nodes: [stateNode], event: event);
+          onTransition?.call(stateType, event, stateNode.stateType);
+        }
+
+        final actions = t.actions ?? [];
+        for (final action in actions) {
+          action(event);
+        }
+
+        return;
+      } else {
+        throw UnimplementedError();
+      }
+    }
+
+    if (activeStateNodes == null || activeStateNodes?.isEmpty == true) {
+      return;
+    }
+
+    for (final node in activeStateNodes!) {
+      node.send(event, onTransition: onTransition);
+    }
   }
-}
-
-class SendResult {
-  final StateNodeDefinition stateNode;
-  final OnTransitionDefinition transition;
-
-  SendResult({required this.stateNode, required this.transition});
 }
