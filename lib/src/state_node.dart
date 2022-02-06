@@ -39,10 +39,10 @@ class StateNodeDefinition<S extends State> implements StateNode {
       if (node.stateNodeType == StateNodeType.parallel) {
         node._activeStateNodes = node.childNodes;
         for (final childNode in node.childNodes) {
-          childNode.send(InitialEvent());
+          childNode.transition(InitialEvent());
         }
       } else {
-        node.send(InitialEvent());
+        node.transition(InitialEvent());
       }
 
       node._onEnterAction?.call(event);
@@ -57,7 +57,7 @@ class StateNodeDefinition<S extends State> implements StateNode {
 
   /// Maps of [Event]s to [TransitionDefinition] available for this
   /// [StateNodeDefinition].
-  final Map<Type, TransitionDefinition> _eventTransitionsMap = {};
+  final Map<Type, List<TransitionDefinition>> _eventTransitionsMap = {};
 
   /// Action invoked on enter this [StateNodeDefinition].
   OnEnterAction? _onEnterAction;
@@ -75,6 +75,23 @@ class StateNodeDefinition<S extends State> implements StateNode {
 
   /// A state is a leaf state if it has no child states.
   bool get isLeaf => childNodes.isEmpty;
+
+  StateNodeDefinition? findStateDefinition(
+    Type state,
+  ) {
+    if (stateType == state) {
+      return this;
+    }
+
+    for (final child in childNodes) {
+      final node = child.findStateDefinition(state);
+      if (node != null) {
+        return node;
+      }
+    }
+
+    return null;
+  }
 
   /// Sets initial State.
   @override
@@ -111,7 +128,8 @@ class StateNodeDefinition<S extends State> implements StateNode {
       actions: actions,
     );
 
-    _eventTransitionsMap[E] = onTransition;
+    _eventTransitionsMap[E] = _eventTransitionsMap[E] ?? [];
+    _eventTransitionsMap[E]!.add(onTransition);
   }
 
   /// Sets callback that will be called right after machine enters this State.
@@ -144,7 +162,10 @@ class StateNodeDefinition<S extends State> implements StateNode {
 
   /// Execute an event on this [StateNode] if any present [condition] is
   /// evaluated as true and a valid destination [StateNode] is found.
-  void send<E extends Event>(E event, {OnTransitionCallback? onTransition}) {
+  void transition<E extends Event>(
+    E event, {
+    OnTransitionCallback? onTransition,
+  }) {
     if (E == InitialEvent) {
       final stateNode = _getInitialStateNode();
       if (stateNode == null) {
@@ -152,53 +173,69 @@ class StateNodeDefinition<S extends State> implements StateNode {
       }
 
       // TODO: check if we are setting all initial states as active??
-      stateNode.send(event, onTransition: onTransition);
+      stateNode.transition(event, onTransition: onTransition);
       setActiveStateNodes(nodes: [stateNode], event: event);
 
       return;
     }
 
     final parent = parentNode;
-    final transition = _eventTransitionsMap[event.runtimeType];
-    if (transition != null && parent != null) {
-      if (transition is OnTransitionDefinition) {
-        // TODO: weird type runtime errors, fsm2 seems to run into the same issue
-        final dynamic t = transition;
-        if ((t.condition as dynamic) != null && !t.condition!(event)) {
-          return;
-        }
+    final transitions = _eventTransitionsMap[event.runtimeType];
+    if (transitions != null && transitions.isNotEmpty && parent != null) {
+      for (final transition in transitions) {
+        try {
+          if (transition is OnTransitionDefinition) {
+            // TODO: weird type runtime errors, fsm2 seems to run into the same issue
+            final dynamic t = transition;
+            if ((t.condition as dynamic) != null && !t.condition!(event)) {
+              continue;
+            }
 
-        if (stateNodeType == StateNodeType.parallel) {
-          final stateNode = childNodes.firstWhere(
-            (element) => element.stateType == transition.toState,
-          );
+            final actions = t.actions ?? [];
+            for (final action in actions) {
+              action(event);
+            }
 
-          final newNodes = [
-            stateNode,
-            ...activeStateNodes?.where((node) => node != stateNode) ??
-                <StateNodeDefinition<State>>[],
-          ];
+            if (stateNodeType == StateNodeType.parallel) {
+              final stateNode = childNodes.firstWhere(
+                (element) => element.stateType == transition.toState,
+              );
 
-          setActiveStateNodes(nodes: newNodes, event: event);
-          onTransition?.call(stateType, event, stateNode.stateType);
-        } else {
-          final stateNode = parent.childNodes.firstWhere(
-            (element) => element.stateType == transition.toState,
-          );
+              final newNodes = [
+                stateNode,
+                ...activeStateNodes?.where((node) => node != stateNode) ??
+                    <StateNodeDefinition<State>>[],
+              ];
 
-          parent.setActiveStateNodes(nodes: [stateNode], event: event);
-          onTransition?.call(stateType, event, stateNode.stateType);
-        }
+              setActiveStateNodes(nodes: newNodes, event: event);
+              onTransition?.call(stateType, event, stateNode.stateType);
+            } else {
+              final startNode = parentNode ?? this;
+              final endNode = startNode.findStateDefinition(
+                transition.toState,
+              );
 
-        final actions = t.actions ?? [];
-        for (final action in actions) {
-          action(event);
-        }
+              var node = endNode;
+              while (node != startNode && node != null) {
+                // if (node.parentNode!.childNodes.contains(stateNode)) {
+                node.parentNode!.setActiveStateNodes(
+                  nodes: [node],
+                  event: event,
+                );
+                onTransition?.call(stateType, event, node.stateType);
+                // }
+                node = node.parentNode;
+              }
 
-        return;
-      } else {
-        throw UnimplementedError();
+              print(node);
+            }
+          } else {
+            throw UnimplementedError();
+          }
+        } on Object {}
+        break;
       }
+      return;
     }
 
     if (activeStateNodes == null || activeStateNodes?.isEmpty == true) {
@@ -206,7 +243,7 @@ class StateNodeDefinition<S extends State> implements StateNode {
     }
 
     for (final node in activeStateNodes!) {
-      node.send(event, onTransition: onTransition);
+      node.transition(event, onTransition: onTransition);
     }
   }
 }

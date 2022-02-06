@@ -26,56 +26,51 @@ void main() {
 
   test('initial State should be Alive and Young', () async {
     final machine = await _createMachine<Alive>(watcher, human);
-    machine.traverse(callback: (node) => print(node));
 
-    // expect(machine.isInState<Alive>(), equals(true));
-    // expect(machine.isInState<Young>(), equals(true));
+    expect(machine.isInState<Alive>(), equals(true));
+    expect(machine.isInState<Young>(), equals(true));
   });
 
-  // test('traverse tree', () async {
-  //   final machine = await _createMachine<Alive>(human);
-  //   final states = <StateDefinition, StateDefinition>{};
-  //   final transitions = <TransitionDefinition>[];
-  //   await machine.traverseTree((sd, tds) {
-  //     transitions.addAll(tds);
-  //     states[sd] = sd;
-  //   }, includeInherited: false);
-  //   expect(states.length, equals(14));
-  //   expect(transitions.length, equals(8));
-  //   expect(machine.isInState<Alive>(), equals(true));
-  // });
+  test(
+    'should keep machine in same state if the matched transition is for '
+    'the current state',
+    () async {
+      final machine = await _createMachine<Alive>(watcher, human);
+      machine.send(OnBirthday());
 
-  // test('Test no op transition', () async {
-  //   final machine = await _createMachine<Alive>(human);
-  //   machine.send(OnBirthday());
+      expect(machine.isInState<Alive>(), equals(true));
+      expect(machine.isInState<Young>(), equals(true));
+      // verifyInOrder([watcher.log('OnBirthday')]);
+    },
+  );
 
-  //   expect(machine.isInState<Alive>(), equals(true));
-  //   expect(machine.isInState<Young>(), equals(true));
-  //   verifyInOrder([watcher.log('OnBirthday')]);
-  // });
+  test('should move to next state when condition is met', () async {
+    // final machine = await _createMachine<Alive>(watcher, human);
+    // for (var i = 0; i < 19; i++) {
+    //   machine.send(OnBirthday());
+    // }
 
-  // test('Test simple transition', () async {
-  //   final machine = await _createMachine<Alive>(human);
-  //   for (var i = 0; i < 19; i++) {
-  //     machine.send(OnBirthday());
-  //   }
+    human.age = 18;
+    final machine = await _createMachine<Alive>(watcher, human);
+    machine.send(OnBirthday());
 
-  //   expect(machine.isInState<Alive>(), equals(true));
-  //   expect(machine.isInState<MiddleAged>(), equals(true));
-  //   verifyInOrder([watcher.log('OnBirthday')]);
-  // });
+    expect(machine.isInState<Alive>(), equals(true));
+    expect(machine.isInState<MiddleAged>(), equals(true));
+    // verifyInOrder([watcher.log('OnBirthday')]);
+  });
 
-  // test('Test multiple transitions', () async {
-  //   final machine = await _createMachine<Alive>(human);
-  //   machine.send(OnBirthday());
+  test('Test multiple transitions', () async {
+    final machine = await _createMachine<Alive>(watcher, human);
+    machine.send(OnBirthday());
 
-  //   expect(machine.isInState<Young>(), equals(true));
-  //   machine.send(OnDeath());
+    expect(machine.isInState<Young>(), equals(true));
+    machine.send(OnDeath());
 
-  //   expect(machine.isInState<Dead>(), equals(true));
+    expect(machine.isInState<Dead>(), equals(true));
+    expect(machine.isInState<Purgatory>(), equals(true));
 
-  //   verifyInOrder([watcher.log('OnBirthday')]);
-  // });
+    // verifyInOrder([watcher.log('OnBirthday')]);
+  });
 
   // test('Invalid transition', () async {
   //   final watcher = MockWatcher();
@@ -166,6 +161,7 @@ void main() {
   // });
 }
 
+// https://xstate.js.org/viz/?gist=6db962fed919174cba71cde5731452e1
 Future<StateMachine> _createMachine<S extends State>(
   Watcher watcher,
   Human human,
@@ -178,19 +174,33 @@ Future<StateMachine> _createMachine<S extends State>(
             ..initial<Young>()
             ..onEnter((e) async => watcher.onEnter(e))
             ..onExit((e) async => watcher.onExit(e))
+
+            // Transitions
             ..on<OnBirthday, Young>(
               condition: (e) => human.age < 18,
-              actions: [(e) async => human.age++],
+              actions: [
+                (e) async {
+                  human.age++;
+                  print(human);
+                },
+              ],
             )
             ..on<OnBirthday, MiddleAged>(
               condition: (e) => human.age < 50,
-              actions: [(e) async => human.age++],
+              actions: [
+                (e) async {
+                  human.age++;
+                  print(human);
+                },
+              ],
             )
             ..on<OnBirthday, Old>(
               condition: (e) => human.age < 80,
               actions: [(e) async => human.age++],
             )
             ..on<OnDeath, Purgatory>()
+
+            // States
             ..state<Young>(
               builder: (b) => b..onExit((e) async => watcher.onExit(e)),
             )
@@ -206,29 +216,28 @@ Future<StateMachine> _createMachine<S extends State>(
           ..state<Purgatory>(
             builder: (b) => b
               ..onEnter((e) async => watcher.onEnter(e))
-              ..on<OnJudged, Buddhist>(
+              ..on<OnJudged, Good>(
                 condition: (e) => e.judgement == Judgement.good,
               )
-              ..on<OnJudged, Catholic>(
+              ..on<OnJudged, Bad>(
                 condition: (e) => e.judgement == Judgement.bad,
               )
-              ..on<OnJudged, SalvationArmy>(
+              ..on<OnJudged, Ugly>(
                 condition: (e) => e.judgement == Judgement.ugly,
               )
-              ..on<OnJudged, Matrix>(
+              ..on<OnJudged, Purgatory>(
                 condition: (e) => e.judgement == Judgement.morallyAmbiguous,
-              )
-              ..state<Matrix>(),
+              ),
           )
           ..state<InHeaven>(
-            builder: (b) => b..state<Buddhist>(),
+            builder: (b) => b..state<Good>(),
           )
           ..state<InHell>(
             builder: (b) => b
-              ..state<Christian>(
+              ..state<Grouped>(
                 builder: (b) => b
-                  ..state<SalvationArmy>()
-                  ..state<Catholic>(),
+                  ..state<Ugly>()
+                  ..state<Bad>(),
               ),
           ),
       ),
@@ -238,6 +247,9 @@ Future<StateMachine> _createMachine<S extends State>(
 
 class Human {
   int age = 0;
+
+  @override
+  String toString() => 'Human $age';
 }
 
 class Alive implements State {}
@@ -258,13 +270,13 @@ class InHeaven implements State {}
 
 class InHell implements State {}
 
-class Christian implements State {}
+class Grouped implements State {}
 
-class Buddhist implements State {}
+class Good implements State {}
 
-class Catholic implements State {}
+class Bad implements State {}
 
-class SalvationArmy implements State {}
+class Ugly implements State {}
 
 /// events
 

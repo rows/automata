@@ -15,7 +15,7 @@ class StateMachine {
   OnTransitionCallback? onTransition;
 
   StateMachine._(this.rootNode, {this.onTransition}) {
-    rootNode.send(InitialEvent());
+    rootNode.transition(InitialEvent());
   }
 
   /// Creates a [StateMachine] using a builder pattern.
@@ -53,7 +53,8 @@ class StateMachine {
   }
 
   void send<E extends Event>(E event) {
-    rootNode.send(event, onTransition: onTransition);
+    rootNode.transition(event, onTransition: onTransition);
+    print(rootNode);
   }
 
   bool isInState<S>() {
