@@ -61,7 +61,7 @@ bool canTransitionToPointSlot(OnCaretPositionChange e) {
 StateMachine createStateMachine() {
   final machine = StateMachine.create(
     (g) => g
-      ..initialState<TypingText>()
+      ..initial<TypingText>()
       ..state<TypingText>(
         (b) => b
           // When value changes it forks into the two parallel state machines
@@ -85,7 +85,7 @@ StateMachine createStateMachine() {
           // Autocomplete state machine
           ..state<Autocomplete>(
             (b) => b
-              ..initialState<AutocompleteUnavailable>()
+              ..initial<AutocompleteUnavailable>()
 
               // Autocomplete events
               ..on<OnCaretPositionChange, AutocompleteList>(
@@ -105,7 +105,7 @@ StateMachine createStateMachine() {
           // Point mode state-mahcine
           ..state<Point>(
             (b) => b
-              ..initialState<PointUnavailable>()
+              ..initial<PointUnavailable>()
 
               // Point mode states
               ..state<PointUnavailable>(
@@ -121,7 +121,7 @@ StateMachine createStateMachine() {
               )
               ..state<PointSlot>(
                 (b) => b
-                  ..initialState<PointSlotEnabled>()
+                  ..initial<PointSlotEnabled>()
                   ..state<PointSlotEnabled>(
                     (b) => b
                       ..on<OnTogglePoint, PointSlotDisabled>()
@@ -148,7 +148,7 @@ StateMachine createStateMachine() {
               )
               ..state<PointReference>(
                 (b) => b
-                  ..initialState<PointReferenceDisabled>()
+                  ..initial<PointReferenceDisabled>()
                   ..state<PointReferenceEnabled>(
                     (b) => b
                       ..on<OnTogglePoint, PointReferenceDisabled>()
