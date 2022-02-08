@@ -3,15 +3,15 @@ import 'package:state_machine/state_machine.dart';
 
 class Watcher {
   void onEnter(Event? e) {
-    print('enter');
+    // print('enter');
   }
 
   void onExit(Event? e) {
-    print('exit ');
+    // print('exit ');
   }
 
   void log(String? message) {
-    print('log');
+    // print('log');
   }
 }
 
@@ -181,7 +181,7 @@ Future<StateMachine> _createMachine<S extends State>(
               actions: [
                 (e) async {
                   human.age++;
-                  print(human);
+                  // print(human);
                 },
               ],
             )
@@ -190,7 +190,7 @@ Future<StateMachine> _createMachine<S extends State>(
               actions: [
                 (e) async {
                   human.age++;
-                  print(human);
+                  // print(human);
                 },
               ],
             )

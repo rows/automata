@@ -51,26 +51,6 @@ class OnTransitionDefinition<S extends State, E extends Event,
     return null;
   }
 
-  /// Walks up the tree looking for an ancestor that is common
-  /// to the [fromAncestors] and [toAncestors] paths.
-  ///
-  /// If no common ancestor is found then null is returned;
-  StateNodeDefinition findCommonAncestor(
-    StateNodeDefinition from,
-    StateNodeDefinition to,
-  ) {
-    final toAncestorSet = to.path.toSet();
-    final fromPath = [from, ...from.path.reversed];
-
-    for (final ancestor in fromPath) {
-      if (toAncestorSet.contains(ancestor)) {
-        return ancestor;
-      }
-    }
-
-    throw Exception('from and to nodes do not share a common rootnode');
-  }
-
   List<StateNodeDefinition> _getExitNodes(
     StateMachineValue value,
     StateNodeDefinition from,
@@ -91,21 +71,6 @@ class OnTransitionDefinition<S extends State, E extends Event,
     return [...nodes, from];
   }
 
-  List<StateNodeDefinition> _getIntialEnterNodes(StateNodeDefinition node) {
-    var result = <StateNodeDefinition>[];
-
-    if (node.stateNodeType == StateNodeType.parallel) {
-      for (final childNode in node.childNodes.values) {
-        result.add(childNode);
-        result.addAll(_getIntialEnterNodes(childNode));
-      }
-    } else if (node.initialStateNode != null) {
-      result.add(node.initialStateNode!);
-    }
-
-    return result;
-  }
-
   List<StateNodeDefinition> _getEnterNodes(
     StateNodeDefinition from,
     StateNodeDefinition to,
@@ -114,7 +79,7 @@ class OnTransitionDefinition<S extends State, E extends Event,
       (element) => !from.path.contains(element),
     );
 
-    return [...nodes, to, ..._getIntialEnterNodes(to)];
+    return [...nodes, to, ...to.getIntialEnterNodes()];
   }
 
   StateMachineValue trigger(StateMachineValue value, E e) {
@@ -124,9 +89,6 @@ class OnTransitionDefinition<S extends State, E extends Event,
     if (toLeaf == null) {
       throw Exception('destination leaf node not found');
     }
-
-    // find common ancestor between these nodes
-    final ancestor = findCommonAncestor(fromLeaf, toLeaf);
 
     // trigger all on exits based on common ancestor
     final exitNodes = _getExitNodes(value, fromLeaf, toLeaf);

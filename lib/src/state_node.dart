@@ -132,26 +132,6 @@ class StateNodeDefinition<S extends State> implements StateNode {
     return _eventTransitionsMap[E] ?? [];
   }
 
-  StatePath _next<E>() {
-    for (final item in getCandidates<E>()) {
-      // TODO: weird type runtime errors
-      final dynamic candidate = item;
-      if ((candidate.condition as dynamic) != null &&
-          !candidate.condition!(E)) {
-        continue;
-      }
-
-      final actions = candidate.actions ?? [];
-      for (final action in actions) {
-        action(E);
-      }
-
-      return childNodes[candidate.toState]!.path;
-    }
-
-    return path;
-  }
-
   List<OnTransitionDefinition> transition<E extends Event>(
     E event, {
     OnTransitionCallback? onTransition,
@@ -167,6 +147,22 @@ class StateNodeDefinition<S extends State> implements StateNode {
 
       return true;
     }).toList();
+  }
+
+  List<StateNodeDefinition> getIntialEnterNodes() {
+    var result = <StateNodeDefinition>[];
+
+    if (stateNodeType == StateNodeType.parallel) {
+      for (final childNode in childNodes.values) {
+        result.add(childNode);
+        result.addAll(childNode.getIntialEnterNodes());
+      }
+    } else if (initialStateNode != null) {
+      result.add(initialStateNode!);
+      result.addAll(initialStateNode!.getIntialEnterNodes());
+    }
+
+    return result;
   }
 
   @override
