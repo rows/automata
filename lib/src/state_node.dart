@@ -3,6 +3,8 @@ import 'transition_definition.dart';
 
 enum StateNodeType { atomic, parallel, terminal }
 
+typedef StatePath = List<StateNodeDefinition>;
+
 /// Internal definition of a [StateNode].
 ///
 /// It includes some methods that should not be called outside of the scope
@@ -15,49 +17,17 @@ class StateNodeDefinition<S extends State> implements StateNode {
   /// [State] associated with this [StateNodeDefinition].
   late final Type stateType;
 
-  /// Keep track of child's active [StateNodeDefinition].
-  ///
-  /// TODO: this should be a list, as when you are in a coregion you should
-  ///  have multiple active states at the same time.
-  List<StateNodeDefinition>? _activeStateNodes;
-
-  List<StateNodeDefinition>? get activeStateNodes => _activeStateNodes;
-
-  void setActiveStateNodes({
-    List<StateNodeDefinition>? nodes,
-    required Event event,
-  }) {
-    final previousNodes = _activeStateNodes ?? [];
-    for (final node in previousNodes) {
-      node._onExitAction?.call(event);
-    }
-
-    _activeStateNodes = nodes;
-
-    final nextNodes = nodes ?? [];
-    for (final node in nextNodes) {
-      if (node.stateNodeType == StateNodeType.parallel) {
-        node._activeStateNodes = node.childNodes;
-        for (final childNode in node.childNodes) {
-          childNode.transition(InitialEvent());
-        }
-      } else {
-        node.transition(InitialEvent());
-      }
-
-      node._onEnterAction?.call(event);
-    }
-  }
+  late final StatePath path;
 
   /// The parent [StateNodeDefinition].
   StateNodeDefinition? parentNode;
 
   /// List of [StateNodeDefinition].
-  List<StateNodeDefinition> childNodes = [];
+  Map<Type, StateNodeDefinition> childNodes = {};
 
   /// Maps of [Event]s to [TransitionDefinition] available for this
   /// [StateNodeDefinition].
-  final Map<Type, List<TransitionDefinition>> _eventTransitionsMap = {};
+  final Map<Type, List<OnTransitionDefinition>> _eventTransitionsMap = {};
 
   /// Action invoked on enter this [StateNodeDefinition].
   OnEnterAction? _onEnterAction;
@@ -71,27 +41,32 @@ class StateNodeDefinition<S extends State> implements StateNode {
   StateNodeDefinition({
     this.parentNode,
     this.stateNodeType = StateNodeType.atomic,
-  }) : stateType = S;
+  })  : stateType = S,
+        path = parentNode == null ? [] : [...parentNode.path, parentNode];
 
   /// A state is a leaf state if it has no child states.
   bool get isLeaf => childNodes.isEmpty;
 
-  StateNodeDefinition? findStateDefinition(
-    Type state,
-  ) {
-    if (stateType == state) {
-      return this;
+  StateNodeDefinition get rootNode => path.isEmpty ? this : path.first;
+
+  /// Compute the initialStateValue.
+  late final initialStateNode = (() {
+    if (stateNodeType == StateNodeType.parallel) {
+      throw UnimplementedError();
     }
 
-    for (final child in childNodes) {
-      final node = child.findStateDefinition(state);
-      if (node != null) {
-        return node;
+    if (_initialState != null) {
+      final initial = _initialState!;
+
+      if (!childNodes.containsKey(initial)) {
+        throw Exception('Initial state "$initial" not found on "$stateType"');
       }
+
+      return childNodes[initial]!;
     }
 
     return null;
-  }
+  })();
 
   /// Sets initial State.
   @override
@@ -110,7 +85,7 @@ class StateNodeDefinition<S extends State> implements StateNode {
       stateNodeType: type,
     );
 
-    childNodes.add(newStateNode);
+    childNodes[I] = newStateNode;
     builder?.call(newStateNode);
   }
 
@@ -144,106 +119,62 @@ class StateNodeDefinition<S extends State> implements StateNode {
     _onExitAction = onExit;
   }
 
-  StateNodeDefinition? _getInitialStateNode() {
-    if (_initialState == null) {
-      return null;
-    }
-
-    if (stateNodeType == StateNodeType.parallel) {
-      throw UnimplementedError();
-    }
-
-    final stateNode = childNodes.firstWhere(
-      (element) => element.stateType == _initialState,
-    );
-
-    return stateNode;
+  void callEnter<E extends Event>(E event) {
+    _onEnterAction?.call(event);
   }
 
-  /// Execute an event on this [StateNode] if any present [condition] is
-  /// evaluated as true and a valid destination [StateNode] is found.
-  void transition<E extends Event>(
+  void callExit<E extends Event>(E event) {
+    _onExitAction?.call(event);
+  }
+
+  List<OnTransitionDefinition> getCandidates<E>() {
+    // we might want to implement transient transitions and wildcards
+    return _eventTransitionsMap[E] ?? [];
+  }
+
+  StatePath _next<E>() {
+    for (final item in getCandidates<E>()) {
+      // TODO: weird type runtime errors
+      final dynamic candidate = item;
+      if ((candidate.condition as dynamic) != null &&
+          !candidate.condition!(E)) {
+        continue;
+      }
+
+      final actions = candidate.actions ?? [];
+      for (final action in actions) {
+        action(E);
+      }
+
+      return childNodes[candidate.toState]!.path;
+    }
+
+    return path;
+  }
+
+  List<OnTransitionDefinition> transition<E extends Event>(
     E event, {
     OnTransitionCallback? onTransition,
   }) {
-    if (E == InitialEvent) {
-      final stateNode = _getInitialStateNode();
-      if (stateNode == null) {
-        return;
+    final candidates = getCandidates<E>();
+
+    return candidates.where((item) {
+      final dynamic candidate = item;
+      if ((candidate.condition as dynamic) != null &&
+          !candidate.condition!(event)) {
+        return false;
       }
 
-      // TODO: check if we are setting all initial states as active??
-      stateNode.transition(event, onTransition: onTransition);
-      setActiveStateNodes(nodes: [stateNode], event: event);
+      return true;
+    }).toList();
+  }
 
-      return;
+  @override
+  String toString() {
+    if (path.isEmpty) {
+      return stateType.toString();
     }
 
-    final parent = parentNode;
-    final transitions = _eventTransitionsMap[event.runtimeType];
-    if (transitions != null && transitions.isNotEmpty && parent != null) {
-      for (final transition in transitions) {
-        try {
-          if (transition is OnTransitionDefinition) {
-            // TODO: weird type runtime errors, fsm2 seems to run into the same issue
-            final dynamic t = transition;
-            if ((t.condition as dynamic) != null && !t.condition!(event)) {
-              continue;
-            }
-
-            final actions = t.actions ?? [];
-            for (final action in actions) {
-              action(event);
-            }
-
-            if (stateNodeType == StateNodeType.parallel) {
-              final stateNode = childNodes.firstWhere(
-                (element) => element.stateType == transition.toState,
-              );
-
-              final newNodes = [
-                stateNode,
-                ...activeStateNodes?.where((node) => node != stateNode) ??
-                    <StateNodeDefinition<State>>[],
-              ];
-
-              setActiveStateNodes(nodes: newNodes, event: event);
-              onTransition?.call(stateType, event, stateNode.stateType);
-            } else {
-              final startNode = parentNode ?? this;
-              final endNode = startNode.findStateDefinition(
-                transition.toState,
-              );
-
-              var node = endNode;
-              while (node != startNode && node != null) {
-                // if (node.parentNode!.childNodes.contains(stateNode)) {
-                node.parentNode!.setActiveStateNodes(
-                  nodes: [node],
-                  event: event,
-                );
-                onTransition?.call(stateType, event, node.stateType);
-                // }
-                node = node.parentNode;
-              }
-
-              print(node);
-            }
-          } else {
-            throw UnimplementedError();
-          }
-        } on Object {}
-        break;
-      }
-      return;
-    }
-
-    if (activeStateNodes == null || activeStateNodes?.isEmpty == true) {
-      return;
-    }
-
-    for (final node in activeStateNodes!) {
-      node.transition(event, onTransition: onTransition);
-    }
+    return '${path.join(' > ')} > $stateType';
   }
 }

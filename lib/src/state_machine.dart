@@ -1,12 +1,47 @@
+import 'package:state_machine/src/transition_definition.dart';
 import 'package:state_machine/src/types.dart';
 
 import 'state_node.dart';
 
 typedef OnTransitionCallback = void Function(Type from, Event e, Type to);
 
-typedef TraverseCallback = void Function(StateNodeDefinition node);
+class StateMachineValue {
+  final Set<StateNodeDefinition> _activeNodes = {};
+
+  StateMachineValue(StateNodeDefinition node) {
+    add(node);
+  }
+
+  bool isInState<S>() {
+    for (final node in _activeNodes) {
+      if (node.stateType == S) {
+        return true;
+      }
+
+      if (node.path.any((node) => node.stateType == S)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /// returns a StateDefinition for all active states
+  List<StateNodeDefinition> activeLeafStates() {
+    return _activeNodes.toList();
+  }
+
+  void add(StateNodeDefinition node) {
+    _activeNodes.add(node);
+  }
+
+  void remove(StateNodeDefinition node) {
+    _activeNodes.remove(node);
+  }
+}
 
 class StateMachine {
+  late StateMachineValue value;
+
   /// Root node of the [StateMachine].
   late StateNodeDefinition<RootState> rootNode;
 
@@ -15,7 +50,8 @@ class StateMachine {
   OnTransitionCallback? onTransition;
 
   StateMachine._(this.rootNode, {this.onTransition}) {
-    rootNode.transition(InitialEvent());
+    value = StateMachineValue(rootNode.initialStateNode!);
+    rootNode.initialStateNode!.callEnter(InitialEvent());
   }
 
   /// Creates a [StateMachine] using a builder pattern.
@@ -29,45 +65,62 @@ class StateMachine {
     return StateMachine._(rootNode, onTransition: onTransition);
   }
 
-  /// Traverse the nodes in depth first search.
-  void traverse({
-    StateNodeDefinition? node,
-    required TraverseCallback callback,
-    bool onlyActiveNodes = false,
-  }) {
+  StateNodeDefinition? findLeaf(Type state, [StateNodeDefinition? node]) {
     final currentNode = node ?? rootNode;
-    callback(currentNode);
+    for (final key in currentNode.childNodes.keys) {
+      final childNode = currentNode.childNodes[key];
+      if (key == state) {
+        return childNode;
+      }
 
-    final children = (onlyActiveNodes
-            ? currentNode.activeStateNodes
-            : currentNode.childNodes) ??
-        [];
+      findLeaf(state, childNode);
+    }
 
-    for (final child in children) {
-      traverse(
-        node: child,
-        callback: callback,
-        onlyActiveNodes: onlyActiveNodes,
+    return null;
+  }
+
+  /// Walks up the tree looking for an ancestor that is common
+  /// to the [fromAncestors] and [toAncestors] paths.
+  ///
+  /// If no common ancestor is found then null is returned;
+  StateNodeDefinition findCommonAncestor(
+    StateNodeDefinition from,
+    StateNodeDefinition to,
+  ) {
+    final toAncestorSet = to.path.toSet();
+
+    for (final ancestor in from.path.reversed) {
+      if (toAncestorSet.contains(ancestor)) {
+        return ancestor;
+      }
+    }
+
+    return rootNode;
+  }
+
+  void send<E extends Event>(E event) {
+    final nodes = value.activeLeafStates();
+    final transitions = <OnTransitionDefinition>[];
+    for (final node in nodes) {
+      transitions.addAll(node.transition(event, onTransition: onTransition));
+    }
+
+    for (final transition in transitions) {
+      value = transition.trigger(value, event);
+      onTransition?.call(
+        transition.fromStateNode.stateType,
+        event,
+        transition.toState,
       );
     }
   }
 
-  void send<E extends Event>(E event) {
-    rootNode.transition(event, onTransition: onTransition);
-    print(rootNode);
+  bool isInState<S>() {
+    return value.isInState<S>();
   }
 
-  bool isInState<S>() {
-    var found = false;
-    traverse(
-      onlyActiveNodes: true,
-      callback: (node) {
-        if (!found) {
-          found = node.stateType == S;
-        }
-      },
-    );
-
-    return found;
+  @override
+  String toString() {
+    return rootNode.toString();
   }
 }

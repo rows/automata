@@ -20,6 +20,7 @@ void main() {
   test('should have the proper initial state', () {
     final machine = _createMachine();
     expect(machine.isInState<Solid>(), isTrue);
+    expect(machine.isInState<Liquid>(), isFalse);
   });
 
   test('should be able to transition to a given state', () {

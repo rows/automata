@@ -13,7 +13,7 @@ class InitialEvent extends Event {}
 
 typedef GuardCondition<E extends Event> = bool Function(E event);
 
-typedef Action<E extends Event> = void Function(E event);
+typedef Action<E extends Event> = void Function(Event event);
 
 /// The method signature for a [State]s [onEnter] method
 typedef OnEnterAction = void Function(Event? event);

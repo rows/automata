@@ -127,12 +127,10 @@ void main() {
       expect(machine.isInState<First>(), isTrue);
       expect(machine.isInState<One>(), isTrue);
       expect(machine.isInState<Two>(), isFalse);
-      // Second goes back to initial state, not sure why, but thats
-      // how XState does it too:
-      // https://xstate.js.org/viz/?gist=a6b9b8e1e4b27da950cffae4092e74df
+      // Second keeps previous state
       expect(machine.isInState<Second>(), isTrue);
-      expect(machine.isInState<Three>(), isTrue);
-      expect(machine.isInState<Four>(), isFalse);
+      expect(machine.isInState<Three>(), isFalse);
+      expect(machine.isInState<Four>(), isTrue);
     },
   );
 }
