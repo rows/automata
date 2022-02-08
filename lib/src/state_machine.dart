@@ -50,8 +50,13 @@ class StateMachine {
   OnTransitionCallback? onTransition;
 
   StateMachine._(this.rootNode, {this.onTransition}) {
-    value = StateMachineValue(rootNode.initialStateNode!);
-    rootNode.initialStateNode!.callEnter(InitialEvent());
+    value = StateMachineValue(rootNode);
+
+    final enterNodes = rootNode.getIntialEnterNodes();
+    for (final node in enterNodes) {
+      node.callEnter(InitialEvent());
+      value.add(node);
+    }
   }
 
   /// Creates a [StateMachine] using a builder pattern.
