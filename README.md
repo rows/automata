@@ -12,8 +12,6 @@
 ## To do:
 - Support transitions with no event
   - If the 'event' attribute is missing, the transition is taken whenever the 'cond' evaluates to true.
-- Add example
-- Drop flutter deps
 - Final state nodes
 - Wait for async actions (? TBC)
 - Create validations for invalid statemachines (eg. parallel state machine with a single substate)

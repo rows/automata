@@ -51,6 +51,14 @@ class StateMachine {
   /// called.
   void send<E extends Event>(E event) {
     final nodes = value.activeLeafStates();
+    final isInTerminalNode = nodes.any(
+      (element) => element.stateNodeType == StateNodeType.terminal,
+    );
+
+    if (isInTerminalNode) {
+      return;
+    }
+
     final transitions = <TransitionDefinition>[];
     for (final node in nodes) {
       transitions.addAll(node.getTransitions(event));
