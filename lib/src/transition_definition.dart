@@ -67,26 +67,34 @@ class OnTransitionDefinition<S extends State, E extends Event,
   }
 
   Set<StateNodeDefinition> _getEnterNodes(
+    StateMachineValue value,
     StateNodeDefinition from,
     StateNodeDefinition to,
   ) {
-    final result = <StateNodeDefinition>{};
-    final nodes = to.path.where(
-      (element) => !from.path.contains(element),
+    final nodes = <StateNodeDefinition>{};
+
+    // Get all nodes in the to path that are not yet part of the value.
+    final activeNodes = value.activeLeafStates();
+    nodes.addAll(
+      to.path.where(
+        (element) => !activeNodes.any((activeNode) =>
+            element == activeNode || activeNode.path.contains(element)),
+      ),
     );
 
-    for (final node in nodes) {
+    final items = to.path.where((element) => !from.path.contains(element));
+    for (final node in items) {
       // TODO: im not yet sure about this yet.
       //  check parallel_statemachine_test for the test wich calls OnTickFirst.
       if (to.parentNode?.stateNodeType == StateNodeType.parallel) {
-        result.addAll(node.getIntialEnterNodes());
+        nodes.addAll(node.getIntialEnterNodes());
       }
     }
 
-    result.add(to);
-    result.addAll(to.getIntialEnterNodes());
+    nodes.add(to);
+    nodes.addAll(to.getIntialEnterNodes());
 
-    return result;
+    return nodes;
   }
 
   StateMachineValue trigger(StateMachineValue value, E e) {
@@ -98,7 +106,7 @@ class OnTransitionDefinition<S extends State, E extends Event,
     }
 
     final exitNodes = _getExitNodes(value, fromLeaf, toLeaf);
-    final enterNodes = _getEnterNodes(fromLeaf, toLeaf);
+    final enterNodes = _getEnterNodes(value, fromLeaf, toLeaf);
 
     // trigger all on exits
     for (final node in exitNodes) {

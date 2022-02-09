@@ -3,17 +3,8 @@ import 'package:mocktail/mocktail.dart';
 import 'package:state_machine/state_machine.dart';
 
 class Watcher {
-  void onEnter(Event? e) {
-    // print('enter');
-  }
-
-  void onExit(Event? e) {
-    // print('exit ');
-  }
-
-  void log(String? message) {
-    // print('log');
-  }
+  void onEnter(Event? e) {}
+  void onExit(Event? e) {}
 }
 
 class _MockWatcher extends Mock implements Watcher {}
@@ -92,16 +83,6 @@ void main() {
     // expect(machine.stateOfMind.activeLeafStates().length, 1);
   });
 
-  // test('Unreachable State.', () async {
-  //   final machine = StateMachine.create(
-  //       (g) => g
-  //         ..initialState<Alive>()
-  //         ..state<Alive>(builder: (b) => b..state<Dead>(builder: (b) {})),
-  //       production: true);
-
-  //   expect(machine.analyse(), isFalse);
-  // });
-
   test('should transition in nested state.', () async {
     final machine = await _createMachine<Dead>(watcher, human);
 
@@ -131,31 +112,20 @@ void main() {
     expect(machine.isInState<MiddleAged>(), isTrue);
   });
 
-  // test('Test onExit/onEnter for nested state change', () async {
-  //   final watcher = MockWatcher();
-  //   final machine = await _createMachine<Alive>(human);
+  test('should call onExit/onEnter for nested state change', () async {
+    final watcher = _MockWatcher();
+    final machine = await _createMachine<Alive>(watcher, human);
 
-  //   /// age this boy until they are middle aged.
-  //   final onDeath = OnDeath();
-  //   machine.send(onDeath);
+    /// age this boy until they are middle aged.
+    final onDeath = OnDeath();
+    machine.send(onDeath);
 
-  //   verify(await watcher.onExit(Young, onDeath));
-  //   verify(await watcher.onExit(Alive, onDeath));
-  //   verify(await watcher.onEnter(Dead, onDeath));
-  //   verify(await watcher.onEnter(Purgatory, onDeath));
-  // });
+    verify(() => watcher.onExit(onDeath)).called(2);
+    verify(() => watcher.onEnter(onDeath)).called(2);
 
-  // test('Export', () async {
-  //   final machine = await _createMachine<Alive>(human);
-  //   machine.analyse();
-  //   machine.export('test/smcat/nested_test.smcat');
-
-  //   final lines = read('test/smcat/nested_test.smcat')
-  //       .toList()
-  //       .reduce((value, line) => value += '\n$line');
-
-  //   expect(lines, equals(_graph));
-  // });
+    expect(machine.isInState<Dead>(), isTrue);
+    expect(machine.isInState<Purgatory>(), isTrue);
+  });
 }
 
 // https://xstate.js.org/viz/?gist=6db962fed919174cba71cde5731452e1
