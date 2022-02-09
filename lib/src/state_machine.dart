@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:automata/src/state_machine_value.dart';
 import 'package:automata/src/transition_definition.dart';
 import 'package:automata/src/types.dart';
@@ -15,6 +17,12 @@ class StateMachine {
 
   /// Root node of the [StateMachine].
   late StateNodeDefinition<RootState> rootNode;
+
+  /// Returns [Stream] of [StateMachineValue].
+  final StreamController<StateMachineValue> _controller =
+      StreamController.broadcast();
+
+  Stream<StateMachineValue> get stream => _controller.stream;
 
   /// The [OnTransitionCallback] will be called on every state transition the
   /// [StateMachine] performs.
@@ -71,6 +79,8 @@ class StateMachine {
         event,
         transition.targetState,
       );
+
+      _controller.add(value);
     }
   }
 

@@ -1,4 +1,4 @@
-import 'package:automata/state_machine.dart';
+import 'package:automata/automata.dart';
 
 class Inactive extends State {}
 

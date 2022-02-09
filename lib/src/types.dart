@@ -1,4 +1,3 @@
-import 'package:automata/src/state_node.dart';
 import 'package:meta/meta.dart';
 
 @immutable
@@ -12,6 +11,26 @@ abstract class RootState extends State {}
 /// [Event] called when the [StateMachine] is first created to ensure the
 /// initial state is properly set.
 class InitialEvent extends Event {}
+
+/// Possible node types.
+///
+/// Note: final is a reserved keyword, therefore we use "terminal" as a
+/// replacement
+enum StateNodeType {
+  /// A leaf node
+  atomic,
+
+  /// A state node with child states
+  compound,
+
+  /// A state that is composed by multiple states that are active at the
+  /// same time, ie. in parallel.
+  parallel,
+
+  /// A terminal state node, once the state machine enters this state it
+  /// cannot change state anymore.
+  terminal,
+}
 
 ///
 abstract class StateNode<S extends State> {
