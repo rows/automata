@@ -64,11 +64,19 @@ class OnTransitionDefinition<S extends State, E extends Event,
     StateNodeDefinition from,
     StateNodeDefinition to,
   ) {
+    final result = <StateNodeDefinition>[];
     final nodes = to.path.where(
       (element) => !from.path.contains(element),
     );
 
-    return [...nodes, to, ...to.getIntialEnterNodes()];
+    for (final node in nodes) {
+      result.addAll(node.getIntialEnterNodes());
+    }
+
+    result.add(to);
+    result.addAll(to.getIntialEnterNodes());
+
+    return result;
   }
 
   StateMachineValue trigger(StateMachineValue value, E e) {
@@ -98,7 +106,7 @@ class OnTransitionDefinition<S extends State, E extends Event,
       node.callEnter(e);
     }
 
-    // TODO: update state of mind
+    // update state of mind
     for (final node in exitNodes.toSet()) {
       value.remove(node);
     }
