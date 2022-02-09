@@ -7,7 +7,21 @@ import 'transition_definition.dart';
 ///
 /// Note: final is a reserved keyword, therefore we use "terminal" as a
 /// replacement
-enum StateNodeType { atomic, parallel, terminal }
+enum StateNodeType {
+  /// A leaf node
+  atomic,
+
+  /// A state node with child states
+  compound,
+
+  /// A state that is composed by multiple states that are active at the
+  /// same time, ie. in parallel.
+  parallel,
+
+  /// A terminal state node, once the state machine enters this state it
+  /// cannot change state anymore.
+  terminal,
+}
 
 /// Internal definition of a [StateNode].
 ///
@@ -41,13 +55,28 @@ class StateNodeDefinition<S extends State> implements StateNode {
   /// Action invoked on exit this [StateNodeDefinition].
   OnExitAction? _onExitAction;
 
-  /// Define the [StateNodeType] of this [StateNode].
-  final StateNodeType stateNodeType;
+  /// User defined [StateNodeType].
+  final StateNodeType? _stateNodeType;
+
+  /// Lazily compute the actual [StateNodeType] based on a user defined value
+  /// or computed based on this state's structure.
+  late final stateNodeType = (() {
+    if (_stateNodeType != null) {
+      return _stateNodeType;
+    }
+
+    if (childNodes.isNotEmpty) {
+      return StateNodeType.compound;
+    }
+
+    return StateNodeType.atomic;
+  })();
 
   StateNodeDefinition({
     this.parentNode,
-    this.stateNodeType = StateNodeType.atomic,
+    StateNodeType? stateNodeType,
   })  : stateType = S,
+        _stateNodeType = stateNodeType,
         path = parentNode == null ? [] : [...parentNode.path, parentNode];
 
   /// A state is a leaf state if it has no child states.
