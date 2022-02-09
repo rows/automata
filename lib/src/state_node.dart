@@ -1,3 +1,5 @@
+import 'package:collection/collection.dart';
+
 import '../state_machine.dart';
 import 'transition_definition.dart';
 
@@ -129,28 +131,34 @@ class StateNodeDefinition<S extends State> implements StateNode {
 
   // Get all candidates in the path of the current node.
   List<OnTransitionDefinition> getCandidates<E>() {
-    final candidates = _eventTransitionsMap[E] ?? [];
-    for (final node in path.reversed) {
-      candidates.addAll(node.getCandidates<E>());
-    }
-    return candidates;
+    return _eventTransitionsMap[E] ?? [];
   }
 
   List<OnTransitionDefinition> transition<E extends Event>(
     E event, {
     OnTransitionCallback? onTransition,
   }) {
-    final candidates = getCandidates<E>();
+    final transitions = <OnTransitionDefinition>[];
 
-    return candidates.where((item) {
-      final dynamic candidate = item;
-      if ((candidate.condition as dynamic) != null &&
-          !candidate.condition!(event)) {
-        return false;
+    for (final node in [this, ...path.reversed]) {
+      final candidates = node.getCandidates<E>();
+
+      final transition = candidates.firstWhereOrNull((item) {
+        final dynamic candidate = item;
+        if ((candidate.condition as dynamic) != null &&
+            !candidate.condition!(event)) {
+          return false;
+        }
+
+        return true;
+      });
+
+      if (transition != null) {
+        transitions.add(transition);
       }
+    }
 
-      return true;
-    }).toList();
+    return transitions;
   }
 
   List<StateNodeDefinition> getIntialEnterNodes() {

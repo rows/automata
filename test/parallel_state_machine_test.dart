@@ -127,10 +127,10 @@ void main() {
       expect(machine.isInState<First>(), isTrue);
       expect(machine.isInState<One>(), isTrue);
       expect(machine.isInState<Two>(), isFalse);
-      // Second keeps previous state
+      // Second goes back to initial state
       expect(machine.isInState<Second>(), isTrue);
-      expect(machine.isInState<Three>(), isFalse);
-      expect(machine.isInState<Four>(), isTrue);
+      expect(machine.isInState<Three>(), isTrue);
+      expect(machine.isInState<Four>(), isFalse);
     },
   );
 }

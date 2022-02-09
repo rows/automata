@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:state_machine/state_machine.dart';
 
 class Watcher {
@@ -15,6 +16,8 @@ class Watcher {
   }
 }
 
+class _MockWatcher extends Mock implements Watcher {}
+
 void main() {
   late Watcher watcher;
   late Human human;
@@ -24,11 +27,11 @@ void main() {
     human = Human();
   });
 
-  test('initial State should be Alive and Young', () async {
+  test('should set initial state to Alive and Young', () async {
     final machine = await _createMachine<Alive>(watcher, human);
 
-    expect(machine.isInState<Alive>(), equals(true));
-    expect(machine.isInState<Young>(), equals(true));
+    expect(machine.isInState<Alive>(), isTrue);
+    expect(machine.isInState<Young>(), isTrue);
   });
 
   test(
@@ -38,24 +41,20 @@ void main() {
       final machine = await _createMachine<Alive>(watcher, human);
       machine.send(OnBirthday());
 
-      expect(machine.isInState<Alive>(), equals(true));
-      expect(machine.isInState<Young>(), equals(true));
+      expect(machine.isInState<Alive>(), isTrue);
+      expect(machine.isInState<Young>(), isTrue);
       // verifyInOrder([watcher.log('OnBirthday')]);
     },
   );
 
   test('should move to next state when condition is met', () async {
-    // final machine = await _createMachine<Alive>(watcher, human);
-    // for (var i = 0; i < 19; i++) {
-    //   machine.send(OnBirthday());
-    // }
-
-    human.age = 18;
     final machine = await _createMachine<Alive>(watcher, human);
-    machine.send(OnBirthday());
+    for (var i = 0; i < 19; i++) {
+      machine.send(OnBirthday());
+    }
 
-    expect(machine.isInState<Alive>(), equals(true));
-    expect(machine.isInState<MiddleAged>(), equals(true));
+    expect(machine.isInState<Alive>(), isTrue);
+    expect(machine.isInState<MiddleAged>(), isTrue);
     // verifyInOrder([watcher.log('OnBirthday')]);
   });
 
@@ -63,41 +62,31 @@ void main() {
     final machine = await _createMachine<Alive>(watcher, human);
     machine.send(OnBirthday());
 
-    expect(machine.isInState<Young>(), equals(true));
+    expect(machine.isInState<Young>(), isTrue);
     machine.send(OnDeath());
 
-    expect(machine.isInState<Dead>(), equals(true));
-    expect(machine.isInState<Purgatory>(), equals(true));
+    expect(machine.isInState<Dead>(), isTrue);
+    expect(machine.isInState<Purgatory>(), isTrue);
 
     // verifyInOrder([watcher.log('OnBirthday')]);
   });
 
-  // test('Invalid transition', () async {
-  //   final watcher = MockWatcher();
-  //   final machine = await _createMachine<Dead>(human);
-  //   try {
-  //     machine.send(OnBirthday());
+  test('should transition to child state', () async {
+    final machine = await _createMachine<Alive>(watcher, human);
+    machine.send(OnDeath());
 
-  //     fail('InvalidTransitionException not thrown');
-  //   } catch (e) {
-  //     expect(e, isA<InvalidTransitionException>());
-  //   }
-  // });
+    expect(machine.isInState<Dead>(), isTrue);
+    expect(machine.isInState<Purgatory>(), isTrue);
+    expect(machine.isInState<Alive>(), isFalse);
+    machine.send(const OnJudged(Judgement.morallyAmbiguous));
 
-  // test('Transition to child state', () async {
-  //   final machine = await _createMachine<Alive>(human);
-  //   machine.send(OnDeath());
+    expect(machine.isInState<Matrix>(), isTrue);
+    expect(machine.isInState<Dead>(), isTrue);
+    expect(machine.isInState<Purgatory>(), isTrue);
 
-  //   expect(machine.isInState<Purgatory>(), equals(true));
-  //   machine.send(OnJudged(Judgement.morallyAmbiguous));
-
-  //   expect(machine.isInState<Matrix>(), equals(true));
-  //   expect(machine.isInState<Dead>(), equals(true));
-  //   expect(machine.isInState<Purgatory>(), equals(true));
-
-  //   /// We should be MiddleAged but Alive should not be a separate path.
-  //   expect(machine.stateOfMind.activeLeafStates().length, 1);
-  // });
+    /// We should be MiddleAged but Alive should not be a separate path.
+    // expect(machine.stateOfMind.activeLeafStates().length, 1);
+  });
 
   // test('Unreachable State.', () async {
   //   final machine = StateMachine.create(
@@ -106,33 +95,35 @@ void main() {
   //         ..state<Alive>(builder: (b) => b..state<Dead>(builder: (b) {})),
   //       production: true);
 
-  //   expect(machine.analyse(), equals(false));
+  //   expect(machine.analyse(), isFalse);
   // });
 
-  // test('Transition in nested state.', () async {
-  //   final watcher = MockWatcher();
-  //   final machine = await _createMachine<Dead>(human);
+  test('should transition in nested state.', () async {
+    final machine = await _createMachine<Dead>(watcher, human);
 
-  //   machine.send(OnJudged(Judgement.good));
+    machine.send(const OnJudged(Judgement.good));
 
-  //   /// should be in both states.
-  //   expect(machine.isInState<InHeaven>(), equals(true));
-  //   expect(machine.isInState<Dead>(), equals(true));
-  // });
+    /// should be in both states.
+    expect(machine.isInState<InHeaven>(), isTrue);
+    expect(machine.isInState<Dead>(), isTrue);
+  });
 
-  // test('calls onExit/onEnter', () async {
-  //   final watcher = MockWatcher();
-  //   final machine = await _createMachine<Alive>(human);
+  test('calls onExit/onEnter', () async {
+    final watcher = _MockWatcher();
+    final machine = await _createMachine<Alive>(watcher, human);
 
-  //   /// age this boy until they are middle aged.
-  //   final onBirthday = OnBirthday();
-  //   for (var i = 0; i < 19; i++) {
-  //     machine.send(onBirthday);
-  //   }
+    /// age this boy until they are middle aged.
+    final onBirthday = OnBirthday();
+    // for (var i = 0; i < 19; i++) {
+    machine.send(onBirthday);
+    // }
 
-  //   verify(await watcher.onExit(Young, onBirthday));
-  //   verify(await watcher.onEnter(MiddleAged, onBirthday));
-  // });
+    // verify(() => watcher.onExit(onBirthday)).called(1);
+    // verify(() => watcher.onEnter(onBirthday)).called(1);
+    expect(machine.isInState<Alive>(), isTrue);
+    expect(machine.isInState<Young>(), isTrue);
+    expect(machine.isInState<MiddleAged>(), isFalse);
+  });
 
   // test('Test onExit/onEnter for nested state change', () async {
   //   final watcher = MockWatcher();
@@ -172,7 +163,10 @@ Future<StateMachine> _createMachine<S extends State>(
       ..state<Alive>(
           builder: (b) => b
             ..initial<Young>()
-            ..onEnter((e) async => watcher.onEnter(e))
+            ..onEnter((e) async {
+              // print('entering alive...');
+              watcher.onEnter(e);
+            })
             ..onExit((e) async => watcher.onExit(e))
 
             // Transitions
@@ -181,7 +175,7 @@ Future<StateMachine> _createMachine<S extends State>(
               actions: [
                 (e) async {
                   human.age++;
-                  // print(human);
+                  // print('Young $human');
                 },
               ],
             )
@@ -190,13 +184,18 @@ Future<StateMachine> _createMachine<S extends State>(
               actions: [
                 (e) async {
                   human.age++;
-                  // print(human);
+                  // print('MiddleAged $human');
                 },
               ],
             )
             ..on<OnBirthday, Old>(
               condition: (e) => human.age < 80,
-              actions: [(e) async => human.age++],
+              actions: [
+                (e) async {
+                  human.age++;
+                  // print('Old $human');
+                },
+              ],
             )
             ..on<OnDeath, Purgatory>()
 
@@ -205,14 +204,20 @@ Future<StateMachine> _createMachine<S extends State>(
               builder: (b) => b..onExit((e) async => watcher.onExit(e)),
             )
             ..state<MiddleAged>(
-              builder: (b) => b..onEnter((e) async => watcher.onEnter(e)),
+              builder: (b) => b
+                ..onEnter((e) async {
+                  // print('entering MiddleAged...');
+                  watcher.onEnter(e);
+                }),
             )
             ..state<Old>())
       ..state<Dead>(
         builder: (b) => b
-          ..onEnter((e) async => watcher.onEnter(e))
-
-          /// ..initialState<InHeaven>()
+          ..initial<Purgatory>()
+          ..onEnter((e) async {
+            // print('entering Dead...');
+            watcher.onEnter(e);
+          })
           ..state<Purgatory>(
             builder: (b) => b
               ..onEnter((e) async => watcher.onEnter(e))
@@ -225,9 +230,10 @@ Future<StateMachine> _createMachine<S extends State>(
               ..on<OnJudged, Ugly>(
                 condition: (e) => e.judgement == Judgement.ugly,
               )
-              ..on<OnJudged, Purgatory>(
+              ..on<OnJudged, Matrix>(
                 condition: (e) => e.judgement == Judgement.morallyAmbiguous,
-              ),
+              )
+              ..state<Matrix>(),
           )
           ..state<InHeaven>(
             builder: (b) => b..state<Good>(),
@@ -287,7 +293,7 @@ class OnDeath implements Event {}
 enum Judgement { good, bad, ugly, morallyAmbiguous }
 
 class OnJudged implements Event {
-  Judgement judgement;
+  final Judgement judgement;
 
-  OnJudged(this.judgement);
+  const OnJudged(this.judgement);
 }
