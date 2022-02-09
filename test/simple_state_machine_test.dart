@@ -30,7 +30,7 @@ void main() {
     expect(machine.isInState<Liquid>(), isTrue);
   });
 
-  test('should call onEnter and onExit while transitioning', () {
+  test('should call onEntry and onExit while transitioning', () {
     var calls = <String>[];
 
     final machine = StateMachine.create(
@@ -39,9 +39,7 @@ void main() {
         ..state<Solid>(
           builder: (b) => b
             ..on<OnMelted, Liquid>()
-            ..onEnter((event) {
-              calls.add('onEnterSolid');
-            })
+            ..onEntry((event) => calls.add('onEntrySolid'))
             ..onExit((event) {
               calls.add('onExitSolid');
             }),
@@ -50,22 +48,18 @@ void main() {
           builder: (b) => b
             ..on<OnFroze, Solid>()
             ..on<OnVaporized, Gas>()
-            ..onEnter((event) {
-              calls.add('onEnterLiquid');
-            })
-            ..onExit((event) {
-              calls.add('onExitLiquid');
-            }),
+            ..onEntry((event) => calls.add('onEntryLiquid'))
+            ..onExit((event) => calls.add('onExitLiquid')),
         )
         ..state<Gas>(
           builder: (b) => b..on<OnCondensed, Liquid>(),
         ),
     );
 
-    expect(calls, equals(['onEnterSolid']));
+    expect(calls, equals(['onEntrySolid']));
     machine.send(OnMelted());
 
-    expect(calls, equals(['onEnterSolid', 'onExitSolid', 'onEnterLiquid']));
+    expect(calls, equals(['onEntrySolid', 'onExitSolid', 'onEntryLiquid']));
     expect(machine.isInState<Liquid>(), isTrue);
   });
 

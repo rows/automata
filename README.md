@@ -1,40 +1,48 @@
-# State Machine & State Charts
+# Finite Automata
 
 ## Features
 
 - Synchronous
-- Declarative and Type-based
-- Supports nested states
-- Supports co-regions
+- Declarative and type-based
+- Nested states
+- Parallel states
 - Guard conditions
-- onEnter / onExit
+- onEntry / onExit
 - onTransition
-- Support initial states
+
+## To do:
+- Final state nodes
+- Wait for async actions (? TBC)
+- Create validations for invalid statemachines (eg. parallel state machine with a single substate)
+
+
+## Usage:
 
 ```dart
 final machine = StateMachine.create(
   (g) => g
-    ..initialState<Solid>()
-    ..state<Solid>(
-      (b) => b
-        ..on<OnMelted, Liquid>(
-          actions: [
-            (e) => print('sideeffect_1'),
-            (e) => print('sideeffect_2'),
-          ],
-          condition: (event) => enabled,
+    ..initial<Start>()
+    ..state<Start>(builder: (g) => g..on<OnKickStart, Main>())
+    ..state<Main>(
+      type: StateNodeType.parallel,
+      builder: (g) => g
+        ..on<OnTickFirst, First>()
+        ..on<OnTickSecond, Second>()
+        ..state<First>(
+          builder: (g) => g
+            ..initial<One>()
+            ..state<One>(builder: (g) => g..on<OnToggle, Two>())
+            ..state<Two>(builder: (g) => g..on<OnToggle, One>()),
+        )
+        ..state<Second>(
+          builder: (g) => g
+            ..initial<Three>()
+            ..state<Three>(builder: (g) => g..on<OnToggle, Four>())
+            ..state<Four>(builder: (g) => g..on<OnToggle, Three>()),
         ),
-    )
-    ..state<Liquid>(
-      (b) => b
-        ..onEnter((s, e) => print('Entering ${s.runtimeType} State'))
-        ..onExit((s, e) => print('Exiting ${s.runtimeType} State'))
-        ..on<OnFroze, Solid>(actions: [(e) => print('Frozen')])
-        ..on<OnVaporized, Gas>(actions: [(e) => print('Vaporized')]),
-    )
-    ..state<Gas>(
-      (b) => b..on<OnCondensed, Liquid>(actions: [(e) => print('Condensed')]),
     ),
-  onTransition: (from, event, to) => print('transitioning...'),
+  onTransition: (from, event, to) => print('$from $event $to'),
 );
+
+machine.send(OnMelted());
 ```
