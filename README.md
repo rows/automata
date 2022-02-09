@@ -10,9 +10,9 @@
 - onTransition
 
 ## To do:
+- Expose stream for changes.
 - Support transitions with no event
   - If the 'event' attribute is missing, the transition is taken whenever the 'cond' evaluates to true.
-- Final state nodes
 - Wait for async actions (? TBC)
 - Create validations for invalid statemachines (eg. parallel state machine with a single substate)
 

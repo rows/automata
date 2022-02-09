@@ -1,7 +1,7 @@
 import 'package:automata/src/state_machine_value.dart';
 import 'package:automata/src/state_node.dart';
 
-import '../state_machine.dart';
+import 'types.dart';
 
 /// Defines a transition to be attached to a [StateNodeDefinition].
 ///

@@ -1,27 +1,7 @@
 import 'package:collection/collection.dart';
 
-import '../state_machine.dart';
 import 'transition_definition.dart';
-
-/// Possible node types.
-///
-/// Note: final is a reserved keyword, therefore we use "terminal" as a
-/// replacement
-enum StateNodeType {
-  /// A leaf node
-  atomic,
-
-  /// A state node with child states
-  compound,
-
-  /// A state that is composed by multiple states that are active at the
-  /// same time, ie. in parallel.
-  parallel,
-
-  /// A terminal state node, once the state machine enters this state it
-  /// cannot change state anymore.
-  terminal,
-}
+import 'types.dart';
 
 /// Internal definition of a [StateNode].
 ///
