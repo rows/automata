@@ -1,5 +1,5 @@
+import 'package:automata/src/state_node.dart';
 import 'package:flutter/foundation.dart';
-import 'package:state_machine/src/state_node.dart';
 
 @immutable
 abstract class State {}

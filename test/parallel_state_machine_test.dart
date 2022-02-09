@@ -1,6 +1,6 @@
+import 'package:automata/src/state_node.dart';
+import 'package:automata/state_machine.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:state_machine/src/state_node.dart';
-import 'package:state_machine/state_machine.dart';
 
 StateMachine createMachine() {
   final machine = StateMachine.create(
