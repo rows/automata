@@ -40,16 +40,20 @@ class OnTransitionDefinition<S extends State, E extends Event,
     return null;
   }
 
-  List<StateNodeDefinition> _getExitNodes(
+  Set<StateNodeDefinition> _getExitNodes(
     StateMachineValue value,
     StateNodeDefinition from,
     StateNodeDefinition to,
   ) {
-    final nodes = from.path
-        .where(
-          (element) => !to.path.contains(element),
-        )
-        .toList();
+    final nodes = <StateNodeDefinition>{};
+
+    nodes.addAll(
+      value.activeLeafStates().where((element) => element.path.contains(from)),
+    );
+
+    nodes.addAll(
+      from.path.where((element) => !to.path.contains(element)),
+    );
 
     for (final node in value.activeLeafStates()) {
       if (node.path.contains(to)) {
@@ -57,20 +61,26 @@ class OnTransitionDefinition<S extends State, E extends Event,
       }
     }
 
-    return [...nodes, from];
+    nodes.add(from);
+
+    return nodes;
   }
 
-  List<StateNodeDefinition> _getEnterNodes(
+  Set<StateNodeDefinition> _getEnterNodes(
     StateNodeDefinition from,
     StateNodeDefinition to,
   ) {
-    final result = <StateNodeDefinition>[];
+    final result = <StateNodeDefinition>{};
     final nodes = to.path.where(
       (element) => !from.path.contains(element),
     );
 
     for (final node in nodes) {
-      result.addAll(node.getIntialEnterNodes());
+      // TODO: im not yet sure about this yet.
+      //  check parallel_statemachine_test for the test wich calls OnTickFirst.
+      if (to.parentNode?.stateNodeType == StateNodeType.parallel) {
+        result.addAll(node.getIntialEnterNodes());
+      }
     }
 
     result.add(to);
@@ -87,10 +97,18 @@ class OnTransitionDefinition<S extends State, E extends Event,
       throw Exception('destination leaf node not found');
     }
 
-    // trigger all on exits based on common ancestor
     final exitNodes = _getExitNodes(value, fromLeaf, toLeaf);
+    final enterNodes = _getEnterNodes(fromLeaf, toLeaf);
+
+    // trigger all on exits
     for (final node in exitNodes) {
-      node.callExit(e);
+      final isEntering = enterNodes.any(
+        (enterNode) => enterNode == node || enterNode.path.contains(node),
+      );
+
+      if (!isEntering) {
+        node.callExit(e);
+      }
     }
 
     // trigger all actions
@@ -101,9 +119,10 @@ class OnTransitionDefinition<S extends State, E extends Event,
     }
 
     // trigger all on enters based on common ancestor
-    final enterNodes = _getEnterNodes(fromLeaf, toLeaf);
     for (final node in enterNodes) {
-      node.callEnter(e);
+      if (!value.activeLeafStates().contains(node)) {
+        node.callEnter(e);
+      }
     }
 
     // update state of mind
