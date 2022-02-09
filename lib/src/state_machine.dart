@@ -1,43 +1,10 @@
+import 'package:state_machine/src/state_value.dart';
 import 'package:state_machine/src/transition_definition.dart';
 import 'package:state_machine/src/types.dart';
 
 import 'state_node.dart';
 
 typedef OnTransitionCallback = void Function(Type from, Event e, Type to);
-
-class StateMachineValue {
-  final Set<StateNodeDefinition> _activeNodes = {};
-
-  StateMachineValue(StateNodeDefinition node) {
-    add(node);
-  }
-
-  bool isInState<S>() {
-    for (final node in _activeNodes) {
-      if (node.stateType == S) {
-        return true;
-      }
-
-      if (node.path.any((node) => node.stateType == S)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  /// returns a StateDefinition for all active states
-  List<StateNodeDefinition> activeLeafStates() {
-    return _activeNodes.toList();
-  }
-
-  void add(StateNodeDefinition node) {
-    _activeNodes.add(node);
-  }
-
-  void remove(StateNodeDefinition node) {
-    _activeNodes.remove(node);
-  }
-}
 
 class StateMachine {
   late StateMachineValue value;
@@ -115,7 +82,7 @@ class StateMachine {
       onTransition?.call(
         transition.fromStateNode.stateType,
         event,
-        transition.toState,
+        transition.targetState,
       );
     }
   }

@@ -1,36 +1,25 @@
 import 'package:state_machine/src/state_node.dart';
+import 'package:state_machine/src/state_value.dart';
 
 import '../state_machine.dart';
 
-class TransitionDefinition<E extends Event> {
+class OnTransitionDefinition<S extends State, E extends Event,
+    TOSTATE extends State> {
+  /// If this [OnTransitionDefinition] is trigger [targetState] will be the new [State]
+  Type targetState;
+
   /// The state this transition is attached to.
   final StateNodeDefinition<State> fromStateNode;
 
   final GuardCondition<E>? condition;
   final List<Action<E>>? actions;
 
-  TransitionDefinition({
-    required this.fromStateNode,
-    required this.condition,
-    required this.actions,
-  });
-}
-
-class OnTransitionDefinition<S extends State, E extends Event,
-    TOSTATE extends State> extends TransitionDefinition<E> {
-  /// If this [OnTransitionDefinition] is trigger [toState] will be the new [State]
-  Type toState;
-
   OnTransitionDefinition({
-    required StateNodeDefinition fromState,
-    GuardCondition<E>? condition,
-    required this.toState,
-    List<Action<E>>? actions,
-  }) : super(
-          fromStateNode: fromState,
-          condition: condition,
-          actions: actions,
-        );
+    required this.fromStateNode,
+    required this.targetState,
+    this.condition,
+    this.actions,
+  });
 
   StateNodeDefinition? findLeaf(Type state, StateNodeDefinition node) {
     final currentNode = node;
@@ -84,7 +73,7 @@ class OnTransitionDefinition<S extends State, E extends Event,
 
   StateMachineValue trigger(StateMachineValue value, E e) {
     final fromLeaf = fromStateNode;
-    final toLeaf = findLeaf(toState, fromLeaf.rootNode);
+    final toLeaf = findLeaf(targetState, fromLeaf.rootNode);
 
     if (toLeaf == null) {
       throw Exception('destination leaf node not found');
