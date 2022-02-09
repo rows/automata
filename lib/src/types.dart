@@ -1,5 +1,5 @@
 import 'package:automata/src/state_node.dart';
-import 'package:flutter/foundation.dart';
+import 'package:meta/meta.dart';
 
 @immutable
 abstract class State {}
@@ -45,6 +45,6 @@ typedef OnEntryAction = void Function(Event? event);
 /// The method signature for a [State]s [onExit] method
 typedef OnExitAction = void Function(Event? event);
 
-typedef OnTransitionCallback = void Function(Type from, Event e, Type to);
+typedef OnTransitionCallback = void Function(Type from, Event e, Type target);
 
 typedef StateBuilder<S extends State> = void Function(StateNode<S>);

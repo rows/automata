@@ -69,4 +69,9 @@ class StateMachineValue {
       _activeNodes.remove(toRemoveNode);
     }
   }
+
+  @override
+  String toString() {
+    return _activeNodes.join('\n');
+  }
 }
