@@ -37,39 +37,6 @@ class StateMachine {
     return StateMachine._(rootNode, onTransition: onTransition);
   }
 
-  StateNodeDefinition? findLeaf(Type state, [StateNodeDefinition? node]) {
-    final currentNode = node ?? rootNode;
-    for (final key in currentNode.childNodes.keys) {
-      final childNode = currentNode.childNodes[key];
-      if (key == state) {
-        return childNode;
-      }
-
-      findLeaf(state, childNode);
-    }
-
-    return null;
-  }
-
-  /// Walks up the tree looking for an ancestor that is common
-  /// to the [fromAncestors] and [toAncestors] paths.
-  ///
-  /// If no common ancestor is found then null is returned;
-  StateNodeDefinition findCommonAncestor(
-    StateNodeDefinition from,
-    StateNodeDefinition to,
-  ) {
-    final toAncestorSet = to.path.toSet();
-
-    for (final ancestor in from.path.reversed) {
-      if (toAncestorSet.contains(ancestor)) {
-        return ancestor;
-      }
-    }
-
-    return rootNode;
-  }
-
   void send<E extends Event>(E event) {
     final nodes = value.activeLeafStates();
     final transitions = <OnTransitionDefinition>[];
