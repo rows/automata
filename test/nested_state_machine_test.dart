@@ -49,11 +49,15 @@ void main() {
 
   test('should move to next state when condition is met', () async {
     final machine = await _createMachine<Alive>(watcher, human);
-    for (var i = 0; i < 19; i++) {
+    for (var i = 0; i < 18; i++) {
       machine.send(OnBirthday());
     }
 
+    // Move the last send outside of the loop to ease debug.
+    machine.send(OnBirthday());
+
     expect(machine.isInState<Alive>(), isTrue);
+    expect(machine.isInState<Young>(), isFalse);
     expect(machine.isInState<MiddleAged>(), isTrue);
     // verifyInOrder([watcher.log('OnBirthday')]);
   });
@@ -112,17 +116,19 @@ void main() {
     final watcher = _MockWatcher();
     final machine = await _createMachine<Alive>(watcher, human);
 
-    /// age this boy until they are middle aged.
+    /// age until they are middle aged.
     final onBirthday = OnBirthday();
-    // for (var i = 0; i < 19; i++) {
-    machine.send(onBirthday);
-    // }
+    for (var i = 0; i < 18; i++) {
+      machine.send(onBirthday);
+    }
 
-    // verify(() => watcher.onExit(onBirthday)).called(1);
-    // verify(() => watcher.onEnter(onBirthday)).called(1);
+    machine.send(onBirthday);
+
+    verify(() => watcher.onExit(onBirthday)).called(1);
+    verify(() => watcher.onEnter(onBirthday)).called(1);
     expect(machine.isInState<Alive>(), isTrue);
-    expect(machine.isInState<Young>(), isTrue);
-    expect(machine.isInState<MiddleAged>(), isFalse);
+    expect(machine.isInState<Young>(), isFalse);
+    expect(machine.isInState<MiddleAged>(), isTrue);
   });
 
   // test('Test onExit/onEnter for nested state change', () async {
