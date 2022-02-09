@@ -1,4 +1,4 @@
-import 'package:state_machine/src/state_node.dart';
+import 'package:automata/src/state_node.dart';
 
 /// Structure that olds the currently active [StateNodeDefinition] in a
 /// [StateMachine].

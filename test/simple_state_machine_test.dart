@@ -1,6 +1,6 @@
+import 'package:automata/src/state_machine.dart';
+import 'package:automata/src/types.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:state_machine/src/state_machine.dart';
-import 'package:state_machine/src/types.dart';
 
 class Solid extends State {}
 

@@ -1,7 +1,6 @@
-# Finite Automata
+# Automata
 
 ## Features
-
 - Synchronous
 - Declarative and type-based
 - Nested states
@@ -11,13 +10,13 @@
 - onTransition
 
 ## To do:
+- Add example
+- Drop flutter deps
 - Final state nodes
 - Wait for async actions (? TBC)
 - Create validations for invalid statemachines (eg. parallel state machine with a single substate)
 
-
 ## Usage:
-
 ```dart
 final machine = StateMachine.create(
   (g) => g

@@ -1,6 +1,6 @@
-import 'package:state_machine/src/state_machine_value.dart';
-import 'package:state_machine/src/transition_definition.dart';
-import 'package:state_machine/src/types.dart';
+import 'package:automata/src/state_machine_value.dart';
+import 'package:automata/src/transition_definition.dart';
+import 'package:automata/src/types.dart';
 
 import 'state_node.dart';
 

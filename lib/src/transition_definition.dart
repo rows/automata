@@ -1,5 +1,5 @@
-import 'package:state_machine/src/state_machine_value.dart';
-import 'package:state_machine/src/state_node.dart';
+import 'package:automata/src/state_machine_value.dart';
+import 'package:automata/src/state_node.dart';
 
 import '../state_machine.dart';
 

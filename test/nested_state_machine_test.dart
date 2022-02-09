@@ -1,6 +1,6 @@
+import 'package:automata/state_machine.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:state_machine/state_machine.dart';
 
 class Watcher {
   void onEntry(Event? e) {}
