@@ -3,9 +3,11 @@ import 'package:collection/collection.dart';
 import '../state_machine.dart';
 import 'transition_definition.dart';
 
+/// Possible node types.
+///
+/// Note: final is a reserved keyword, therefore we use "terminal" as a
+/// replacement
 enum StateNodeType { atomic, parallel, terminal }
-
-typedef StatePath = List<StateNodeDefinition>;
 
 /// Internal definition of a [StateNode].
 ///
@@ -19,7 +21,9 @@ class StateNodeDefinition<S extends State> implements StateNode {
   /// [State] associated with this [StateNodeDefinition].
   late final Type stateType;
 
-  late final StatePath path;
+  /// Path of [StateNodeDefinition] from the rootNode up until this node.
+  /// It does not include the current node.
+  late final List<StateNodeDefinition> path;
 
   /// The parent [StateNodeDefinition].
   StateNodeDefinition? parentNode;
@@ -29,10 +33,10 @@ class StateNodeDefinition<S extends State> implements StateNode {
 
   /// Maps of [Event]s to [TransitionDefinition] available for this
   /// [StateNodeDefinition].
-  final Map<Type, List<OnTransitionDefinition>> _eventTransitionsMap = {};
+  final Map<Type, List<TransitionDefinition>> _eventTransitionsMap = {};
 
-  /// Action invoked on enter this [StateNodeDefinition].
-  OnEnterAction? _onEnterAction;
+  /// Action invoked on entry this [StateNodeDefinition].
+  OnEntryAction? _onEntryAction;
 
   /// Action invoked on exit this [StateNodeDefinition].
   OnExitAction? _onExitAction;
@@ -49,6 +53,8 @@ class StateNodeDefinition<S extends State> implements StateNode {
   /// A state is a leaf state if it has no child states.
   bool get isLeaf => childNodes.isEmpty;
 
+  /// Getter to retrieve the root node, ie. the first node in this node's
+  /// [path].
   StateNodeDefinition get rootNode => path.isEmpty ? this : path.first;
 
   /// Compute the initialStateValue.
@@ -79,7 +85,7 @@ class StateNodeDefinition<S extends State> implements StateNode {
   /// Attach a [StateNodeDefinition].
   @override
   void state<I extends State>({
-    BuildState? builder,
+    StateBuilder? builder,
     StateNodeType type = StateNodeType.atomic,
   }) {
     final newStateNode = StateNodeDefinition<I>(
@@ -91,14 +97,14 @@ class StateNodeDefinition<S extends State> implements StateNode {
     builder?.call(newStateNode);
   }
 
-  /// Attach a [OnTransitionDefinition] to allow to transition from this
+  /// Attach a [TransitionDefinition] to allow to transition from this
   /// this [StateNode] to a given [StateNode].
   @override
   void on<E extends Event, TargetState extends State>({
     GuardCondition<E>? condition,
     List<Action<E>>? actions,
   }) {
-    final onTransition = OnTransitionDefinition<S, E, TargetState>(
+    final onTransition = TransitionDefinition<S, E, TargetState>(
       fromStateNode: this,
       targetState: TargetState,
       condition: condition,
@@ -109,10 +115,10 @@ class StateNodeDefinition<S extends State> implements StateNode {
     _eventTransitionsMap[E]!.add(onTransition);
   }
 
-  /// Sets callback that will be called right after machine enters this State.
+  /// Sets callback that will be called right after machine entrys this State.
   @override
-  void onEnter(OnEnterAction onEnter, {String? label}) {
-    _onEnterAction = onEnter;
+  void onEntry(OnEntryAction onEntry, {String? label}) {
+    _onEntryAction = onEntry;
   }
 
   /// Sets callback that will be called right before machine exits this State.
@@ -121,24 +127,30 @@ class StateNodeDefinition<S extends State> implements StateNode {
     _onExitAction = onExit;
   }
 
-  void callEnter<E extends Event>(E event) {
-    _onEnterAction?.call(event);
+  /// Invoke this node's [OnEntryAction].
+  void callEntry<E extends Event>(E event) {
+    _onEntryAction?.call(event);
   }
 
+  /// Invoke this node's [OnExitAction].
   void callExit<E extends Event>(E event) {
     _onExitAction?.call(event);
   }
 
   // Get all candidates in the path of the current node.
-  List<OnTransitionDefinition> getCandidates<E>() {
+  List<TransitionDefinition> getCandidates<E>() {
     return _eventTransitionsMap[E] ?? [];
   }
 
-  List<OnTransitionDefinition> transition<E extends Event>(
-    E event, {
-    OnTransitionCallback? onTransition,
-  }) {
-    final transitions = <OnTransitionDefinition>[];
+  /// Return all the [TransitionDefinition] for the given node and it's parents.
+  ///
+  /// Only one [TransitionDefinition] should be returned for each node, ie.
+  /// if we have a single node with multiple transition definitions for the
+  /// same event, we should only return the first one that returns true from
+  /// the [GuardCondition].
+  ///
+  List<TransitionDefinition> getTransitions<E extends Event>(E event) {
+    final transitions = <TransitionDefinition>[];
 
     for (final node in [this, ...path.reversed]) {
       final candidates = node.getCandidates<E>();
@@ -161,17 +173,19 @@ class StateNodeDefinition<S extends State> implements StateNode {
     return transitions;
   }
 
-  List<StateNodeDefinition> getIntialEnterNodes() {
+  /// Return all [StateNodeDefinition] that should set as active once this
+  /// node is activated.
+  List<StateNodeDefinition> getIntialStates() {
     var result = <StateNodeDefinition>[];
 
     if (stateNodeType == StateNodeType.parallel) {
       for (final childNode in childNodes.values) {
         result.add(childNode);
-        result.addAll(childNode.getIntialEnterNodes());
+        result.addAll(childNode.getIntialStates());
       }
     } else if (initialStateNode != null) {
       result.add(initialStateNode!);
-      result.addAll(initialStateNode!.getIntialEnterNodes());
+      result.addAll(initialStateNode!.getIntialStates());
     }
 
     return result;

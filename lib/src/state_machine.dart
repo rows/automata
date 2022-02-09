@@ -1,12 +1,16 @@
-import 'package:state_machine/src/state_value.dart';
+import 'package:state_machine/src/state_machine_value.dart';
 import 'package:state_machine/src/transition_definition.dart';
 import 'package:state_machine/src/types.dart';
 
 import 'state_node.dart';
 
-typedef OnTransitionCallback = void Function(Type from, Event e, Type to);
-
+/// Finite State Machine.
+///
+/// Exposes a concise API to create and transition in a state machine and also
+/// to query it's current values.
+///
 class StateMachine {
+  /// Hold all the currently active [StateNodeDefinition].
   late StateMachineValue value;
 
   /// Root node of the [StateMachine].
@@ -19,29 +23,37 @@ class StateMachine {
   StateMachine._(this.rootNode, {this.onTransition}) {
     value = StateMachineValue(rootNode);
 
-    final enterNodes = rootNode.getIntialEnterNodes();
-    for (final node in enterNodes) {
-      node.callEnter(InitialEvent());
+    // Get root's initial nodes and call entry on them with [InitialEvent]
+    final entryNodes = rootNode.getIntialStates();
+    for (final node in entryNodes) {
+      node.callEntry(InitialEvent());
       value.add(node);
     }
   }
 
   /// Creates a [StateMachine] using a builder pattern.
   factory StateMachine.create(
-    void Function(StateNode) buildGraph, {
+    void Function(StateNode) builder, {
     OnTransitionCallback? onTransition,
   }) {
     final rootNode = StateNodeDefinition<RootState>();
-    buildGraph(rootNode);
+    builder(rootNode);
 
     return StateMachine._(rootNode, onTransition: onTransition);
   }
 
+  /// Send an event to the state machine.
+  ///
+  /// The currently active [StateNodeDefinition] will pick up this event and
+  /// execute any [TransitionDefinition] that matches it's [GuardCondition].
+  ///
+  /// For every executed transitions, the provided [OnTransitionCallback] is
+  /// called.
   void send<E extends Event>(E event) {
     final nodes = value.activeLeafStates();
-    final transitions = <OnTransitionDefinition>[];
+    final transitions = <TransitionDefinition>[];
     for (final node in nodes) {
-      transitions.addAll(node.transition(event, onTransition: onTransition));
+      transitions.addAll(node.getTransitions(event));
     }
 
     for (final transition in transitions) {
@@ -54,6 +66,7 @@ class StateMachine {
     }
   }
 
+  /// Check if the state machine is currently in a given [State].
   bool isInState<S>() {
     return value.isInState<S>();
   }

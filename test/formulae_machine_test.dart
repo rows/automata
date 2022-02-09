@@ -5,7 +5,7 @@ import 'package:state_machine/src/state_node.dart';
 import 'package:state_machine/src/types.dart';
 
 class Watcher {
-  void onEnter(Event? e) {}
+  void onEntry(Event? e) {}
   void onExit(Event? e) {}
 }
 

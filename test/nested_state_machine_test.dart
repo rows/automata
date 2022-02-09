@@ -3,7 +3,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:state_machine/state_machine.dart';
 
 class Watcher {
-  void onEnter(Event? e) {}
+  void onEntry(Event? e) {}
   void onExit(Event? e) {}
 }
 
@@ -90,7 +90,7 @@ void main() {
     expect(machine.isInState<Dead>(), isTrue);
   });
 
-  test('calls onExit/onEnter', () async {
+  test('calls onExit/onEntry', () async {
     final watcher = _MockWatcher();
     final machine = await _createMachine<Alive>(watcher, human);
 
@@ -103,13 +103,13 @@ void main() {
     machine.send(onBirthday);
 
     verify(() => watcher.onExit(onBirthday)).called(1);
-    verify(() => watcher.onEnter(onBirthday)).called(1);
+    verify(() => watcher.onEntry(onBirthday)).called(1);
     expect(machine.isInState<Alive>(), isTrue);
     expect(machine.isInState<Young>(), isFalse);
     expect(machine.isInState<MiddleAged>(), isTrue);
   });
 
-  test('should call onExit/onEnter for nested state change', () async {
+  test('should call onExit/onEntry for nested state change', () async {
     final watcher = _MockWatcher();
     final machine = await _createMachine<Alive>(watcher, human);
 
@@ -118,7 +118,7 @@ void main() {
     machine.send(onDeath);
 
     verify(() => watcher.onExit(onDeath)).called(2);
-    verify(() => watcher.onEnter(onDeath)).called(2);
+    verify(() => watcher.onEntry(onDeath)).called(2);
 
     expect(machine.isInState<Dead>(), isTrue);
     expect(machine.isInState<Purgatory>(), isTrue);
@@ -136,9 +136,9 @@ Future<StateMachine> _createMachine<S extends State>(
       ..state<Alive>(
           builder: (b) => b
             ..initial<Young>()
-            ..onEnter((e) async {
-              // print('entering alive...');
-              watcher.onEnter(e);
+            ..onEntry((e) async {
+              // print('entrying alive...');
+              watcher.onEntry(e);
             })
             ..onExit((e) async => watcher.onExit(e))
 
@@ -178,22 +178,22 @@ Future<StateMachine> _createMachine<S extends State>(
             )
             ..state<MiddleAged>(
               builder: (b) => b
-                ..onEnter((e) async {
-                  // print('entering MiddleAged...');
-                  watcher.onEnter(e);
+                ..onEntry((e) async {
+                  // print('entrying MiddleAged...');
+                  watcher.onEntry(e);
                 }),
             )
             ..state<Old>())
       ..state<Dead>(
         builder: (b) => b
           ..initial<Purgatory>()
-          ..onEnter((e) async {
-            // print('entering Dead...');
-            watcher.onEnter(e);
+          ..onEntry((e) async {
+            // print('entrying Dead...');
+            watcher.onEntry(e);
           })
           ..state<Purgatory>(
             builder: (b) => b
-              ..onEnter((e) async => watcher.onEnter(e))
+              ..onEntry((e) async => watcher.onEntry(e))
               ..on<OnJudged, Good>(
                 condition: (e) => e.judgement == Judgement.good,
               )
