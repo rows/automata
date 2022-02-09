@@ -50,7 +50,6 @@ void main() {
     expect(machine.isInState<Alive>(), isTrue);
     expect(machine.isInState<Young>(), isFalse);
     expect(machine.isInState<MiddleAged>(), isTrue);
-    // verifyInOrder([watcher.log('OnBirthday')]);
   });
 
   test('Test multiple transitions', () async {
@@ -62,8 +61,6 @@ void main() {
 
     expect(machine.isInState<Dead>(), isTrue);
     expect(machine.isInState<Purgatory>(), isTrue);
-
-    // verifyInOrder([watcher.log('OnBirthday')]);
   });
 
   test('should transition to child state', () async {
@@ -80,7 +77,7 @@ void main() {
     expect(machine.isInState<Purgatory>(), isTrue);
 
     /// We should be MiddleAged but Alive should not be a separate path.
-    // expect(machine.stateOfMind.activeLeafStates().length, 1);
+    expect(machine.value.activeLeafStates().length, 1);
   });
 
   test('should transition in nested state.', () async {
