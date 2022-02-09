@@ -92,13 +92,13 @@ class StateNodeDefinition<S extends State> implements StateNode {
   /// Attach a [OnTransitionDefinition] to allow to transition from this
   /// this [StateNode] to a given [StateNode].
   @override
-  void on<E extends Event, TOSTATE extends State>({
+  void on<E extends Event, TargetState extends State>({
     GuardCondition<E>? condition,
     List<Action<E>>? actions,
   }) {
-    final onTransition = OnTransitionDefinition<S, E, TOSTATE>(
-      fromState: this,
-      toState: TOSTATE,
+    final onTransition = OnTransitionDefinition<S, E, TargetState>(
+      fromStateNode: this,
+      targetState: TargetState,
       condition: condition,
       actions: actions,
     );
@@ -127,9 +127,13 @@ class StateNodeDefinition<S extends State> implements StateNode {
     _onExitAction?.call(event);
   }
 
+  // Get all candidates in the path of the current node.
   List<OnTransitionDefinition> getCandidates<E>() {
-    // we might want to implement transient transitions and wildcards
-    return _eventTransitionsMap[E] ?? [];
+    final candidates = _eventTransitionsMap[E] ?? [];
+    for (final node in path.reversed) {
+      candidates.addAll(node.getCandidates<E>());
+    }
+    return candidates;
   }
 
   List<OnTransitionDefinition> transition<E extends Event>(
