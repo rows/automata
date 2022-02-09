@@ -1,6 +1,6 @@
 import 'package:automata/state_machine.dart';
-import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:test/test.dart';
 
 class Watcher {
   void onEntry(Event? e) {}
@@ -80,7 +80,7 @@ void main() {
     expect(machine.value.activeLeafStates().length, 1);
   });
 
-  test('should transition in nested state.', () async {
+  test('should transition in compound state.', () async {
     final machine = await _createMachine<Dead>(watcher, human);
 
     machine.send(const OnJudged(Judgement.good));
@@ -109,7 +109,7 @@ void main() {
     expect(machine.isInState<MiddleAged>(), isTrue);
   });
 
-  test('should call onExit/onEntry for nested state change', () async {
+  test('should call onExit/onEntry for compound state change', () async {
     final watcher = _MockWatcher();
     final machine = await _createMachine<Alive>(watcher, human);
 

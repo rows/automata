@@ -1,6 +1,6 @@
 import 'package:automata/src/state_node.dart';
 import 'package:automata/state_machine.dart';
-import 'package:flutter_test/flutter_test.dart';
+import 'package:test/test.dart';
 
 StateMachine createMachine() {
   final machine = StateMachine.create(
@@ -59,7 +59,7 @@ void main() {
     expect(machine.isInState<Start>(), isTrue);
   });
 
-  test('should transition to intial state of nested machine', () async {
+  test('should transition to intial state of compound machine', () async {
     final machine = createMachine();
 
     expect(machine.isInState<Start>(), isTrue);
@@ -75,7 +75,7 @@ void main() {
     expect(machine.isInState<Four>(), isFalse);
   });
 
-  test('should be able to transition nested stated machines', () async {
+  test('should be able to transition compound stated machines', () async {
     final machine = createMachine();
 
     machine.send(OnKickStart());

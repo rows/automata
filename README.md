@@ -3,13 +3,15 @@
 ## Features
 - Synchronous
 - Declarative and type-based
-- Nested states
+- Compound states (nested states)
 - Parallel states
 - Guard conditions
 - onEntry / onExit
 - onTransition
 
 ## To do:
+- Support transitions with no event
+  - If the 'event' attribute is missing, the transition is taken whenever the 'cond' evaluates to true.
 - Add example
 - Drop flutter deps
 - Final state nodes
