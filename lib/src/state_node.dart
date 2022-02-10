@@ -67,22 +67,41 @@ class StateNodeDefinition<S extends State> implements StateNode {
   StateNodeDefinition get rootNode => path.isEmpty ? this : path.first;
 
   /// Compute the initialStateValue.
-  late final initialStateNode = (() {
+  late final initialStateNodes = (() {
+    // Reference:
+    //  "when the state machine enters the parent <parallel> state, it also
+    //  enters each child state"
     if (stateNodeType == StateNodeType.parallel) {
-      throw UnimplementedError();
+      final result = childNodes.values.toList();
+      for (final childNode in childNodes.values) {
+        result.addAll(childNode.initialStateNodes);
+      }
+      return result;
     }
 
-    if (_initialState != null) {
-      final initial = _initialState!;
+    // Reference:
+    //  "If neither the <initial> child or the 'initial' element is specified,
+    //  the default initial state is the first child state in document order."
+    if (stateNodeType == StateNodeType.compound) {
+      late StateNodeDefinition node;
+      if (_initialState != null) {
+        final initial = _initialState;
 
-      if (!childNodes.containsKey(initial)) {
-        throw Exception('Initial state "$initial" not found on "$stateType"');
+        if (!childNodes.containsKey(initial)) {
+          throw Exception('Initial state "$initial" not found on "$stateType"');
+        }
+        node = childNodes[initial]!;
+      } else {
+        node = childNodes.values.first;
       }
 
-      return childNodes[initial]!;
+      final result = [node];
+      result.addAll(node.initialStateNodes);
+      return result;
     }
 
-    return null;
+    // If atomic or terminal there is no initial node.
+    return <StateNodeDefinition>[];
   })();
 
   /// Sets initial State.
@@ -93,10 +112,7 @@ class StateNodeDefinition<S extends State> implements StateNode {
 
   /// Attach a [StateNodeDefinition].
   @override
-  void state<I extends State>({
-    StateBuilder? builder,
-    StateNodeType type = StateNodeType.atomic,
-  }) {
+  void state<I extends State>({StateBuilder? builder, StateNodeType? type}) {
     final newStateNode = StateNodeDefinition<I>(
       parentNode: this,
       stateNodeType: type,
@@ -180,24 +196,6 @@ class StateNodeDefinition<S extends State> implements StateNode {
     }
 
     return transitions;
-  }
-
-  /// Return all [StateNodeDefinition] that should set as active once this
-  /// node is activated.
-  List<StateNodeDefinition> getIntialStates() {
-    var result = <StateNodeDefinition>[];
-
-    if (stateNodeType == StateNodeType.parallel) {
-      for (final childNode in childNodes.values) {
-        result.add(childNode);
-        result.addAll(childNode.getIntialStates());
-      }
-    } else if (initialStateNode != null) {
-      result.add(initialStateNode!);
-      result.addAll(initialStateNode!.getIntialStates());
-    }
-
-    return result;
   }
 
   @override

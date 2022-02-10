@@ -107,12 +107,12 @@ class TransitionDefinition<S extends State, E extends Event,
       // TODO: im not yet sure about this yet.
       //  check parallel_statemachine_test for the test wich calls OnTickFirst.
       if (target.parentNode?.stateNodeType == StateNodeType.parallel) {
-        nodes.addAll(node.getIntialStates());
+        nodes.addAll(node.initialStateNodes);
       }
     }
 
     nodes.add(target);
-    nodes.addAll(target.getIntialStates());
+    nodes.addAll(target.initialStateNodes);
 
     return nodes;
   }
