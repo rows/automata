@@ -52,20 +52,6 @@ class StateNodeDefinition<S extends State> implements StateNode {
     return StateNodeType.atomic;
   })();
 
-  StateNodeDefinition({
-    this.parentNode,
-    StateNodeType? stateNodeType,
-  })  : stateType = S,
-        _stateNodeType = stateNodeType,
-        path = parentNode == null ? [] : [...parentNode.path, parentNode];
-
-  /// A state is a leaf state if it has no child states.
-  bool get isLeaf => childNodes.isEmpty;
-
-  /// Getter to retrieve the root node, ie. the first node in this node's
-  /// [path].
-  StateNodeDefinition get rootNode => path.isEmpty ? this : path.first;
-
   /// Compute the initialStateValue.
   late final initialStateNodes = (() {
     // Reference:
@@ -104,6 +90,17 @@ class StateNodeDefinition<S extends State> implements StateNode {
     return <StateNodeDefinition>[];
   })();
 
+  StateNodeDefinition({
+    this.parentNode,
+    StateNodeType? stateNodeType,
+  })  : stateType = S,
+        _stateNodeType = stateNodeType,
+        path = parentNode == null ? [] : [...parentNode.path, parentNode];
+
+  /// Getter to retrieve the root node, ie. the first node in this node's
+  /// [path].
+  StateNodeDefinition get rootNode => path.isEmpty ? this : path.first;
+
   /// Sets initial State.
   @override
   void initial<I extends State>({String? label}) {
@@ -123,14 +120,14 @@ class StateNodeDefinition<S extends State> implements StateNode {
   }
 
   /// Attach a [TransitionDefinition] to allow to transition from this
-  /// this [StateNode] to a given [StateNode].
+  /// this [StateNode] to a given [StateNode] for a specific [Event].
   @override
   void on<E extends Event, TargetState extends State>({
     GuardCondition<E>? condition,
     List<Action<E>>? actions,
   }) {
     final onTransition = TransitionDefinition<S, E, TargetState>(
-      fromStateNode: this,
+      sourceStateNode: this,
       targetState: TargetState,
       condition: condition,
       actions: actions,
@@ -138,6 +135,25 @@ class StateNodeDefinition<S extends State> implements StateNode {
 
     _eventTransitionsMap[E] = _eventTransitionsMap[E] ?? [];
     _eventTransitionsMap[E]!.add(onTransition);
+  }
+
+  /// Attach a [EventlessTransitionDefinition] to allow to transition from this
+  /// [StateNode]  to a given [StateNode] for any [Event] as long as the
+  /// conditions are met.
+  @override
+  void always<TargetState extends State>({
+    GuardCondition<NoEvent>? condition,
+    List<Action<NoEvent>>? actions,
+  }) {
+    final onTransition = TransitionDefinition<S, NoEvent, TargetState>(
+      sourceStateNode: this,
+      targetState: TargetState,
+      condition: condition,
+      actions: actions,
+    );
+
+    _eventTransitionsMap[NoEvent] = _eventTransitionsMap[NoEvent] ?? [];
+    _eventTransitionsMap[NoEvent]!.add(onTransition);
   }
 
   /// Sets callback that will be called right after machine entrys this State.

@@ -10,11 +10,12 @@
 - onTransition
 
 ## To do:
-- Expose stream for changes.
 - Support transitions with no event
   - If the 'event' attribute is missing, the transition is taken whenever the 'cond' evaluates to true.
 - Wait for async actions (? TBC)
 - Create validations for invalid statemachines (eg. parallel state machine with a single substate)
+- Final states should raise a internal event OnDone and the user should be able to provide a onDoneCallback to listen for this.
+  - check xstate: https://xstate.js.org/docs/guides/final.html#api
 
 ## Usage:
 ```dart
@@ -40,7 +41,7 @@ final machine = StateMachine.create(
             ..state<Four>(builder: (g) => g..on<OnToggle, Three>()),
         ),
     ),
-  onTransition: (from, event, to) => print('$from $event $to'),
+  onTransition: (source, event, target) => print('$source $event $target'),
 );
 
 machine.send(OnMelted());

@@ -18,7 +18,7 @@ class TransitionDefinition<S extends State, E extends Event,
   Type targetState;
 
   /// The state this transition is attached to.
-  final StateNodeDefinition<State> fromStateNode;
+  final StateNodeDefinition<State> sourceStateNode;
 
   /// Optional condition that can be define to allow/deny the transition.
   final GuardCondition<E>? condition;
@@ -27,7 +27,7 @@ class TransitionDefinition<S extends State, E extends Event,
   final List<Action<E>>? actions;
 
   TransitionDefinition({
-    required this.fromStateNode,
+    required this.sourceStateNode,
     required this.targetState,
     this.condition,
     this.actions,
@@ -59,17 +59,19 @@ class TransitionDefinition<S extends State, E extends Event,
   /// exiting from in this transition.
   Set<StateNodeDefinition> _getExitNodes(
     StateMachineValue value,
-    StateNodeDefinition from,
+    StateNodeDefinition source,
     StateNodeDefinition target,
   ) {
     final nodes = <StateNodeDefinition>{};
 
     nodes.addAll(
-      value.activeLeafStates().where((element) => element.path.contains(from)),
+      value
+          .activeLeafStates()
+          .where((element) => element.path.contains(source)),
     );
 
     nodes.addAll(
-      from.path.where((element) => !target.path.contains(element)),
+      source.path.where((element) => !target.path.contains(element)),
     );
 
     for (final node in value.activeLeafStates()) {
@@ -78,7 +80,7 @@ class TransitionDefinition<S extends State, E extends Event,
       }
     }
 
-    nodes.add(from);
+    nodes.add(source);
 
     return nodes;
   }
@@ -88,7 +90,7 @@ class TransitionDefinition<S extends State, E extends Event,
   /// entering into in this transition.
   Set<StateNodeDefinition> _getEntryNodes(
     StateMachineValue value,
-    StateNodeDefinition from,
+    StateNodeDefinition source,
     StateNodeDefinition target,
   ) {
     final nodes = <StateNodeDefinition>{};
@@ -102,7 +104,9 @@ class TransitionDefinition<S extends State, E extends Event,
       ),
     );
 
-    final items = target.path.where((element) => !from.path.contains(element));
+    final items = target.path.where(
+      (element) => !source.path.contains(element),
+    );
     for (final node in items) {
       // TODO: im not yet sure about this yet.
       //  check parallel_statemachine_test for the test wich calls OnTickFirst.
@@ -119,15 +123,15 @@ class TransitionDefinition<S extends State, E extends Event,
 
   /// Trigger this transition for the given event.
   StateMachineValue trigger(StateMachineValue value, E e) {
-    final fromLeaf = fromStateNode;
-    final targetLeaf = _findLeaf(targetState, fromLeaf.rootNode);
+    final sourceLeaf = sourceStateNode;
+    final targetLeaf = _findLeaf(targetState, sourceLeaf.rootNode);
 
     if (targetLeaf == null) {
       throw Exception('destination leaf node not found');
     }
 
-    final exitNodes = _getExitNodes(value, fromLeaf, targetLeaf);
-    final entryNodes = _getEntryNodes(value, fromLeaf, targetLeaf);
+    final exitNodes = _getExitNodes(value, sourceLeaf, targetLeaf);
+    final entryNodes = _getEntryNodes(value, sourceLeaf, targetLeaf);
 
     // trigger all on exits
     for (final node in exitNodes) {

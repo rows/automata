@@ -37,6 +37,10 @@ class StateMachine {
       node.callEntry(InitialEvent());
       value.add(node);
     }
+
+    // In order to support "eventless transitions" a NoEvent is sent after
+    // the initial event is set.
+    send(NoEvent());
   }
 
   /// Creates a [StateMachine] using a builder pattern.
@@ -57,6 +61,9 @@ class StateMachine {
   ///
   /// For every executed transitions, the provided [OnTransitionCallback] is
   /// called.
+  ///
+  /// In order to support "eventless transitions" a NoEvent is sent when a
+  /// transition is performed.
   void send<E extends Event>(E event) {
     final nodes = value.activeLeafStates();
     final isInTerminalNode = nodes.any(
@@ -72,16 +79,22 @@ class StateMachine {
       transitions.addAll(node.getTransitions(event));
     }
 
+    if (transitions.isEmpty) {
+      return;
+    }
+
     for (final transition in transitions) {
       value = transition.trigger(value, event);
       onTransition?.call(
-        transition.fromStateNode.stateType,
+        transition.sourceStateNode.stateType,
         event,
         transition.targetState,
       );
 
       _controller.add(value);
     }
+
+    send(NoEvent());
   }
 
   /// Check if the state machine is currently in a given [State].

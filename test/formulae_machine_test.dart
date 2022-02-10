@@ -1,5 +1,4 @@
 import 'package:automata/src/state_machine.dart';
-import 'package:automata/src/state_node.dart';
 import 'package:automata/src/types.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:test/test.dart';
