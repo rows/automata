@@ -32,7 +32,7 @@ class StateMachine {
     value = StateMachineValue(rootNode);
 
     // Get root's initial nodes and call entry on them with [InitialEvent]
-    final entryNodes = rootNode.getIntialStates();
+    final entryNodes = rootNode.initialStateNodes;
     for (final node in entryNodes) {
       node.callEntry(InitialEvent());
       value.add(node);

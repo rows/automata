@@ -36,10 +36,7 @@ enum StateNodeType {
 abstract class StateNode<S extends State> {
   void initial<I extends State>({String? label});
 
-  void state<I extends State>({
-    StateBuilder? builder,
-    StateNodeType type = StateNodeType.atomic,
-  });
+  void state<I extends State>({StateBuilder? builder, StateNodeType? type});
 
   void on<E extends Event, Target extends State>({
     GuardCondition<E>? condition,
