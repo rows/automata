@@ -8,6 +8,9 @@ abstract class Event {}
 
 abstract class RootState extends State {}
 
+/// Pseudo [Event] used to trigger eventless transitions.
+class NoEvent extends Event {}
+
 /// [Event] called when the [StateMachine] is first created to ensure the
 /// initial state is properly set.
 class InitialEvent extends Event {}
@@ -43,6 +46,11 @@ abstract class StateNode<S extends State> {
     List<Action<E>>? actions,
   });
 
+  void always<Target extends State>({
+    GuardCondition<NoEvent>? condition,
+    List<Action<NoEvent>>? actions,
+  });
+
   /// Sets callback that will be called right after machine entrys this State.
   void onEntry(OnEntryAction onEntry, {String? label});
 
@@ -53,7 +61,7 @@ abstract class StateNode<S extends State> {
 ///
 typedef GuardCondition<E extends Event> = bool Function(E event);
 
-typedef Action<E extends Event> = void Function(Event event);
+typedef Action<E extends Event> = void Function(E event);
 
 /// The method signature for a [State]s [onEntry] method
 typedef OnEntryAction = void Function(Event? event);
@@ -61,6 +69,6 @@ typedef OnEntryAction = void Function(Event? event);
 /// The method signature for a [State]s [onExit] method
 typedef OnExitAction = void Function(Event? event);
 
-typedef OnTransitionCallback = void Function(Type from, Event e, Type target);
+typedef OnTransitionCallback = void Function(Type source, Event e, Type target);
 
 typedef StateBuilder<S extends State> = void Function(StateNode<S>);

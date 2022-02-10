@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print
+
 import 'package:automata/automata.dart';
 
 class Inactive extends State {}
@@ -22,8 +24,8 @@ void main() {
           ..onExit((event) => print('< Exit Active'))
           ..on<OnToggle, Inactive>(),
       ),
-    onTransition: (from, e, target) => print(
-      'Transition:: Received Event $e in State $from transitioning to State $target',
+    onTransition: (source, e, target) => print(
+      'Transition:: Received Event $e in State $source transitioning to State $target',
     ),
   );
 

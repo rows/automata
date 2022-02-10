@@ -1,5 +1,4 @@
 import 'package:automata/automata.dart';
-import 'package:automata/src/state_node.dart';
 import 'package:test/test.dart';
 
 StateMachine createMachine() {
