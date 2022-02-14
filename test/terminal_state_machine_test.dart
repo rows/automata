@@ -30,55 +30,18 @@ void main() {
 
       expect(finalMachine.matchesStatePath([_Crosswalk1, _Stop]), isTrue);
       expect(finalMachine.matchesStatePath([_Crosswalk2, _Stop]), isTrue);
-      verify(() => actions.stopCrosswalk1()).called(1);
+      verify(actions.stopCrosswalk1).called(1);
 
       finalMachine.send(_OnPedStop());
 
       expect(finalMachine.matchesStatePath([_Crosswalk1, _Stop]), isTrue);
       expect(finalMachine.matchesStatePath([_Crosswalk2, _Stop2]), isTrue);
 
-      verify(() => actions.stopCrosswalk2()).called(1);
-      verify(() => actions.prepareGreenLight()).called(1);
-      verifyNever(() => actions.shouldNeverOccur());
+      verify(actions.stopCrosswalk2).called(1);
+      verify(actions.prepareGreenLight).called(1);
+      verifyNever(actions.shouldNeverOccur);
     },
   );
-
-  // test('should execute final child state actions first', () {
-  //   const nestedFinalMachine = Machine({
-  //     id: 'nestedFinal',
-  //     initial: 'foo',
-  //     states: {
-  //       foo: {
-  //         initial: 'bar',
-  //         onDone: { actions: 'fooAction' },
-  //         states: {
-  //           bar: {
-  //             initial: 'baz',
-  //             onDone: 'barFinal',
-  //             states: {
-  //               baz: {
-  //                 type: 'final',
-  //                 onEntry: 'bazAction'
-  //               }
-  //             }
-  //           },
-  //           barFinal: {
-  //             type: 'final',
-  //             onDone: { actions: 'barAction' }
-  //           }
-  //         }
-  //       }
-  //     }
-  //   });
-
-  //   const { initialState } = nestedFinalMachine;
-
-  //   expect(initialState.actions.map((a) => a.type)).toEqual([
-  //     'bazAction',
-  //     'barAction',
-  //     'fooAction'
-  //   ]);
-  // },);
 }
 
 class _StateMachineActions {
@@ -166,7 +129,8 @@ StateMachine _createMachine(_StateMachineActions actions) {
             actions: [(_) => actions.prepareGreenLight()],
           ),
       )
-      // this action should never occur because final states are not direct children of machine
+      // this action should never occur because final states are not direct
+      // children of machine
       ..onDone(
         actions: [(_) => actions.shouldNeverOccur()],
       ),

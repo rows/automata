@@ -1,10 +1,9 @@
 import 'dart:async';
 
-import 'package:automata/src/state_machine_value.dart';
-import 'package:automata/src/transition_definition.dart';
-import 'package:automata/src/types.dart';
-
+import 'state_machine_value.dart';
 import 'state_node.dart';
+import 'transition_definition.dart';
+import 'types.dart';
 
 /// Finite State Machine.
 ///
@@ -38,9 +37,14 @@ class StateMachine {
       value.add(node);
     }
 
-    // In order to support "eventless transitions" a NoEvent is sent after
+    // In order to support "eventless transitions" a NullEvent is sent after
     // the initial event is set.
-    send(NoEvent());
+    send(NullEvent());
+  }
+
+  /// Dipose [StreamController].
+  void dispose() {
+    _controller.close();
   }
 
   /// Creates a [StateMachine] using a builder pattern.
@@ -62,7 +66,7 @@ class StateMachine {
   /// For every executed transitions, the provided [OnTransitionCallback] is
   /// called.
   ///
-  /// In order to support "eventless transitions" a NoEvent is sent when a
+  /// In order to support "eventless transitions" a NullEvent is sent when a
   /// transition is performed.
   void send<E extends Event>(E event) {
     final nodes = value.activeLeafStates();
@@ -87,7 +91,7 @@ class StateMachine {
       _controller.add(value);
     }
 
-    send(NoEvent());
+    send(NullEvent());
   }
 
   /// Check if the state machine is currently in a given [State].

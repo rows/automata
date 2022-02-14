@@ -1,6 +1,5 @@
-import 'package:automata/src/state_machine_value.dart';
-import 'package:automata/src/state_node.dart';
-
+import 'state_machine_value.dart';
+import 'state_node.dart';
 import 'types.dart';
 
 /// Defines a transition to be attached to a [StateNodeDefinition].
@@ -14,7 +13,8 @@ import 'types.dart';
 ///
 class TransitionDefinition<S extends State, E extends Event,
     TargetState extends State> {
-  /// If this [TransitionDefinition] is trigger [targetState] will be the new [State]
+  /// If this [TransitionDefinition] is trigger [targetState] will be the new
+  /// [State]
   Type targetState;
 
   /// The state this transition is attached to.
@@ -99,8 +99,10 @@ class TransitionDefinition<S extends State, E extends Event,
     final activeNodes = value.activeLeafStates();
     nodes.addAll(
       target.path.where(
-        (element) => !activeNodes.any((activeNode) =>
-            element == activeNode || activeNode.path.contains(element)),
+        (element) => !activeNodes.any(
+          (activeNode) =>
+              element == activeNode || activeNode.path.contains(element),
+        ),
       ),
     );
 
@@ -167,13 +169,8 @@ class TransitionDefinition<S extends State, E extends Event,
     }
 
     // update state of mind
-    for (final node in exitNodes) {
-      value.remove(node);
-    }
-
-    for (final node in entryNodes) {
-      value.add(node);
-    }
+    exitNodes.forEach(value.remove);
+    entryNodes.forEach(value.add);
 
     // Call onDone for all parent node in which children have reached a
     // terminal (final) state

@@ -34,7 +34,6 @@ void main() {
 
       expect(machine.isInState<Alive>(), isTrue);
       expect(machine.isInState<Young>(), isTrue);
-      // verifyInOrder([watcher.log('OnBirthday')]);
     },
   );
 
@@ -134,56 +133,57 @@ Future<StateMachine> _createMachine<S extends State>(
     (g) => g
       ..initial<S>()
       ..state<Alive>(
-          builder: (b) => b
-            ..initial<Young>()
-            ..onEntry((e) async {
-              // print('entrying alive...');
-              watcher.onEntry(e);
-            })
-            ..onExit((e) async => watcher.onExit(e))
+        builder: (b) => b
+          ..initial<Young>()
+          ..onEntry((e) async {
+            // print('entrying alive...');
+            watcher.onEntry(e);
+          })
+          ..onExit((e) async => watcher.onExit(e))
 
-            // Transitions
-            ..on<OnBirthday, Young>(
-              condition: (e) => human.age < 18,
-              actions: [
-                (e) async {
-                  human.age++;
-                  // print('Young $human');
-                },
-              ],
-            )
-            ..on<OnBirthday, MiddleAged>(
-              condition: (e) => human.age < 50,
-              actions: [
-                (e) async {
-                  human.age++;
-                  // print('MiddleAged $human');
-                },
-              ],
-            )
-            ..on<OnBirthday, Old>(
-              condition: (e) => human.age < 80,
-              actions: [
-                (e) async {
-                  human.age++;
-                  // print('Old $human');
-                },
-              ],
-            )
-            ..on<OnDeath, Purgatory>()
+          // Transitions
+          ..on<OnBirthday, Young>(
+            condition: (e) => human.age < 18,
+            actions: [
+              (e) async {
+                human.age++;
+                // print('Young $human');
+              },
+            ],
+          )
+          ..on<OnBirthday, MiddleAged>(
+            condition: (e) => human.age < 50,
+            actions: [
+              (e) async {
+                human.age++;
+                // print('MiddleAged $human');
+              },
+            ],
+          )
+          ..on<OnBirthday, Old>(
+            condition: (e) => human.age < 80,
+            actions: [
+              (e) async {
+                human.age++;
+                // print('Old $human');
+              },
+            ],
+          )
+          ..on<OnDeath, Purgatory>()
 
-            // States
-            ..state<Young>(
-              builder: (b) => b..onExit((e) async => watcher.onExit(e)),
-            )
-            ..state<MiddleAged>(
-              builder: (b) => b
-                ..onEntry((e) async {
-                  // print('entrying MiddleAged...');
-                  watcher.onEntry(e);
-                }),
-            )
-            ..state<Old>())
+          // States
+          ..state<Young>(
+            builder: (b) => b..onExit((e) async => watcher.onExit(e)),
+          )
+          ..state<MiddleAged>(
+            builder: (b) => b
+              ..onEntry((e) async {
+                // print('entrying MiddleAged...');
+                watcher.onEntry(e);
+              }),
+          )
+          ..state<Old>(),
+      )
       ..state<Dead>(
         builder: (b) => b
           ..initial<Purgatory>()
