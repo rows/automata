@@ -31,7 +31,7 @@ void main() {
   });
 
   test('should call onEntry and onExit while transitioning', () {
-    var calls = <String>[];
+    final calls = <String>[];
 
     final machine = StateMachine.create(
       (g) => g
@@ -92,7 +92,7 @@ void main() {
   });
 
   test('should invoke onTransition on all transitions', () {
-    final transitions = [];
+    final transitions = <dynamic>[];
     final machine = StateMachine.create(
       (g) => g
         ..initial<Solid>()
@@ -110,7 +110,7 @@ void main() {
   });
 
   test('should call actions on transition', () {
-    final effects = [];
+    final effects = <dynamic>[];
     final machine = StateMachine.create(
       (g) => g
         ..initial<Solid>()

@@ -135,13 +135,17 @@ class StateNodeDefinition<S extends State> implements StateNode {
   /// [path].
   StateNodeDefinition get rootNode => path.isEmpty ? this : path.first;
 
-  /// Sets initial State.
+  /// Defines the initial [State].
+  /// Used in [StateNode] of type [StateNodeType.compound].
   @override
-  void initial<I extends State>({String? label}) {
+  void initial<I extends State>() {
     _initialState = I;
   }
 
-  /// Attach a [StateNodeDefinition].
+  /// Attach a [StateNode] of a given [State].
+  ///
+  /// Optionally it can define a [StateNodeType], if no specific type is
+  /// provided then one its inferred.
   @override
   void state<I extends State>({StateBuilder? builder, StateNodeType? type}) {
     final newStateNode = StateNodeDefinition<I>(
@@ -171,23 +175,23 @@ class StateNodeDefinition<S extends State> implements StateNode {
     _eventTransitionsMap[E]!.add(onTransition);
   }
 
-  /// Attach a [EventlessTransitionDefinition] to allow to transition from this
-  /// [StateNode]  to a given [StateNode] for any [Event] as long as the
+  /// Attach a Eventless [TransitionDefinition] to allow to transition from this
+  /// [StateNode] to a given [StateNode] for any [Event] as long as the
   /// conditions are met.
   @override
   void always<TargetState extends State>({
-    GuardCondition<NoEvent>? condition,
-    List<Action<NoEvent>>? actions,
+    GuardCondition<NullEvent>? condition,
+    List<Action<NullEvent>>? actions,
   }) {
-    final onTransition = TransitionDefinition<S, NoEvent, TargetState>(
+    final onTransition = TransitionDefinition<S, NullEvent, TargetState>(
       sourceStateNode: this,
       targetState: TargetState,
       condition: condition,
       actions: actions,
     );
 
-    _eventTransitionsMap[NoEvent] = _eventTransitionsMap[NoEvent] ?? [];
-    _eventTransitionsMap[NoEvent]!.add(onTransition);
+    _eventTransitionsMap[NullEvent] = _eventTransitionsMap[NullEvent] ?? [];
+    _eventTransitionsMap[NullEvent]!.add(onTransition);
   }
 
   /// Sets callback that will be called right after machine entrys this State.
@@ -202,12 +206,16 @@ class StateNodeDefinition<S extends State> implements StateNode {
     _onExitAction = onExit;
   }
 
-  // TODO:
-  //  when we have validations:
-  //  1. a onDone can only be placed on a compound state wich has a descendant
-  //  final node.
-  //  2. a onDone can only be placed on a parallel state which every child
-  //  has a descendant final node.
+  /// Sets callback that will bne called when:
+  /// - for a [StateNodeType.compound] - a child final substate is activated.
+  /// - for a [StateNodeType.parallel] - all sub-states are in final states.
+  ///
+  /// TODO:
+  ///  when we have validations:
+  ///  1. a onDone can only be placed on a compound state wich has a descendant
+  ///  final node.
+  ///  2. a onDone can only be placed on a parallel state which every child
+  ///  has a descendant final node.
   @override
   void onDone<E extends Event>({required List<Action<E>> actions}) {
     _onDone = OnDone<E>(actions: actions);
@@ -253,9 +261,11 @@ class StateNodeDefinition<S extends State> implements StateNode {
       final candidates = node.getCandidates<E>();
 
       final transition = candidates.firstWhereOrNull((item) {
-        final dynamic candidate = item;
-        if ((candidate.condition as dynamic) != null &&
-            !candidate.condition!(event)) {
+        // ignore: avoid_dynamic_calls
+        final dynamic condition = (item as dynamic).condition;
+
+        // ignore: avoid_dynamic_calls
+        if (condition != null && condition(event) == false) {
           return false;
         }
 

@@ -1,4 +1,4 @@
-import 'package:automata/src/state_node.dart';
+import 'state_node.dart';
 
 /// Structure that olds the currently active [StateNodeDefinition] in a
 /// [StateMachine].
@@ -10,7 +10,7 @@ class StateMachineValue {
 
   StateMachineValue(StateNodeDefinition node) : _activeNodes = {node};
 
-  /// Check if the given [State] is in the path of any of the currrently
+  /// Check if the given [State] is in the path of any of the currently
   /// active [StateNodeDefinition].
   bool isInState<S>() {
     for (final node in _activeNodes) {
@@ -44,7 +44,7 @@ class StateMachineValue {
   /// Add a new active [StateNodeDefinition].
   ///
   /// On the process of adding a new active node, we also remove any now
-  /// redudant node, ie.
+  /// redundant node, ie.
   ///  - given an existing node of: `RootNode > A`
   ///  - when adding: `RootNode > A > B`
   /// It is safe to remove `RootNode > A`
@@ -53,9 +53,7 @@ class StateMachineValue {
     final duppedNodes = node.path.where(
       (path) => _activeNodes.any((element) => element == path),
     );
-    for (final duppedNode in duppedNodes) {
-      remove(duppedNode);
-    }
+    duppedNodes.forEach(remove);
 
     _activeNodes.add(node);
   }
@@ -76,9 +74,7 @@ class StateMachineValue {
       }
     }
 
-    for (final toRemoveNode in toRemove) {
-      _activeNodes.remove(toRemoveNode);
-    }
+    toRemove.forEach(_activeNodes.remove);
   }
 
   @override

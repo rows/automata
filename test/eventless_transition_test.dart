@@ -80,11 +80,13 @@ StateMachine _createMachine<S extends State>(Scoreboard scoreboard) {
           // if the condition is met.
           ..always<Win>(condition: (_) => scoreboard.points > 99)
           ..always<Lose>(condition: (_) => scoreboard.points < 0)
-          ..on<OnAwardPoints, Playing>(actions: [
-            (OnAwardPoints e) {
-              scoreboard.points += e.points;
-            },
-          ]),
+          ..on<OnAwardPoints, Playing>(
+            actions: [
+              (OnAwardPoints e) {
+                scoreboard.points += e.points;
+              },
+            ],
+          ),
       )
       ..state<Win>(type: StateNodeType.terminal)
       ..state<Lose>(type: StateNodeType.terminal),
