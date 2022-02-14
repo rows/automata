@@ -52,10 +52,12 @@ abstract class StateNode<S extends State> {
   });
 
   /// Sets callback that will be called right after machine entrys this State.
-  void onEntry(OnEntryAction onEntry, {String? label});
+  void onEntry(OnEntryAction onEntry);
 
   /// Sets callback that will be called right before machine exits this State.
-  void onExit(OnExitAction onExit, {String? label});
+  void onExit(OnExitAction onExit);
+
+  void onDone<E extends Event>({required List<Action<E>> actions});
 }
 
 ///

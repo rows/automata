@@ -124,7 +124,15 @@ class TransitionDefinition<S extends State, E extends Event,
   /// Trigger this transition for the given event.
   StateMachineValue trigger(StateMachineValue value, E e) {
     final sourceLeaf = sourceStateNode;
-    final targetLeaf = _findLeaf(targetState, sourceLeaf.rootNode);
+
+    // First look for the target leaf within the compound root and only
+    // afterwards fallback to search from root.
+    StateNodeDefinition? targetLeaf;
+    if (sourceLeaf.parentNode?.stateNodeType == StateNodeType.compound) {
+      targetLeaf = _findLeaf(targetState, sourceLeaf.parentNode!);
+    }
+
+    targetLeaf ??= _findLeaf(targetState, sourceLeaf.rootNode);
 
     if (targetLeaf == null) {
       throw Exception('destination leaf node not found');
@@ -140,7 +148,7 @@ class TransitionDefinition<S extends State, E extends Event,
       );
 
       if (!isEntrying) {
-        node.callExit(e);
+        node.callExitAction(e);
       }
     }
 
@@ -154,17 +162,55 @@ class TransitionDefinition<S extends State, E extends Event,
     // trigger all on entrys based on common ancestor
     for (final node in entryNodes) {
       if (!value.activeLeafStates().contains(node)) {
-        node.callEntry(e);
+        node.callEntryAction(e);
       }
     }
 
     // update state of mind
-    for (final node in exitNodes.toSet()) {
+    for (final node in exitNodes) {
       value.remove(node);
     }
 
-    for (final node in entryNodes.toSet()) {
+    for (final node in entryNodes) {
       value.add(node);
+    }
+
+    // Call onDone for all parent node in which children have reached a
+    // terminal (final) state
+    for (final node in entryNodes) {
+      final parentNode = node.parentNode;
+      if (node.stateNodeType != StateNodeType.terminal || parentNode == null) {
+        continue;
+      }
+
+      // If the final node is within a compound or the root node, call onAction
+      // on the parent.
+      if (parentNode.stateNodeType == StateNodeType.compound ||
+          parentNode == node.rootNode) {
+        parentNode.callDoneActions(e);
+      }
+
+      if (parentNode.stateNodeType != StateNodeType.compound) {
+        continue;
+      }
+
+      // If the final node is within a parallel state machine, if all sub-states
+      // are final, then call onDone on the parallel machine.
+      final parallelParentMachine = parentNode.parentNode;
+      if (parallelParentMachine?.stateNodeType == StateNodeType.parallel) {
+        var allParallelNodesInFinalState = true;
+        for (final activeNode in value.activeLeafStates()) {
+          if (activeNode.path.contains(parallelParentMachine) &&
+              activeNode.stateNodeType != StateNodeType.terminal) {
+            allParallelNodesInFinalState = false;
+            break;
+          }
+        }
+
+        if (allParallelNodesInFinalState) {
+          parallelParentMachine?.callDoneActions(e);
+        }
+      }
     }
 
     return value;

@@ -3,6 +3,14 @@ import 'package:collection/collection.dart';
 import 'transition_definition.dart';
 import 'types.dart';
 
+/// TODO: Can StateNodes have a `data` property that is passed into the
+///  condition of the onDone? according to XState, it does. Check reference.
+class OnDone<E extends Event> {
+  final List<Action<E>>? actions;
+
+  OnDone({required this.actions});
+}
+
 /// Internal definition of a [StateNode].
 ///
 /// It includes some methods that should not be called outside of the scope
@@ -18,6 +26,12 @@ class StateNodeDefinition<S extends State> implements StateNode {
   /// Path of [StateNodeDefinition] from the rootNode up until this node.
   /// It does not include the current node.
   late final List<StateNodeDefinition> path;
+  late final Set<Type> fullPathStateType = (() {
+    return {
+      ...path.map((e) => e.stateType).toSet(),
+      stateType,
+    };
+  })();
 
   /// The parent [StateNodeDefinition].
   StateNodeDefinition? parentNode;
@@ -34,6 +48,8 @@ class StateNodeDefinition<S extends State> implements StateNode {
 
   /// Action invoked on exit this [StateNodeDefinition].
   OnExitAction? _onExitAction;
+
+  OnDone? _onDone;
 
   /// User defined [StateNodeType].
   final StateNodeType? _stateNodeType;
@@ -88,6 +104,24 @@ class StateNodeDefinition<S extends State> implements StateNode {
 
     // If atomic or terminal there is no initial node.
     return <StateNodeDefinition>[];
+  })();
+
+  /// When transitioning in a parallel state machine we first want to make sure
+  /// we look for the target node within the parallel machine before searching
+  /// from the root node.
+  ///
+  /// This is crucial when you have nodes with the same state in different
+  /// parallel states.
+  ///
+  /// TODO: we should be solvable with LCCA (Least common coumpound ancestor)
+  ///  to investigate at later date.
+  late final StateNodeDefinition compoundRootNode = (() {
+    for (final node in path.reversed) {
+      if (node.stateNodeType == StateNodeType.compound) {
+        return node;
+      }
+    }
+    return rootNode;
   })();
 
   StateNodeDefinition({
@@ -158,28 +192,50 @@ class StateNodeDefinition<S extends State> implements StateNode {
 
   /// Sets callback that will be called right after machine entrys this State.
   @override
-  void onEntry(OnEntryAction onEntry, {String? label}) {
+  void onEntry(OnEntryAction onEntry) {
     _onEntryAction = onEntry;
   }
 
   /// Sets callback that will be called right before machine exits this State.
   @override
-  void onExit(OnExitAction onExit, {String? label}) {
+  void onExit(OnExitAction onExit) {
     _onExitAction = onExit;
   }
 
+  // TODO:
+  //  when we have validations:
+  //  1. a onDone can only be placed on a compound state wich has a descendant
+  //  final node.
+  //  2. a onDone can only be placed on a parallel state which every child
+  //  has a descendant final node.
+  @override
+  void onDone<E extends Event>({required List<Action<E>> actions}) {
+    _onDone = OnDone<E>(actions: actions);
+  }
+
   /// Invoke this node's [OnEntryAction].
-  void callEntry<E extends Event>(E event) {
+  void callEntryAction<E extends Event>(E event) {
     _onEntryAction?.call(event);
   }
 
   /// Invoke this node's [OnExitAction].
-  void callExit<E extends Event>(E event) {
+  void callExitAction<E extends Event>(E event) {
     _onExitAction?.call(event);
+  }
+
+  void callDoneActions<E extends Event>(E event) {
+    final actions = _onDone?.actions ?? [];
+    for (final action in actions) {
+      action.call(event);
+    }
   }
 
   // Get all candidates in the path of the current node.
   List<TransitionDefinition> getCandidates<E>() {
+    if (stateNodeType == StateNodeType.terminal) {
+      return [];
+    }
+
     return _eventTransitionsMap[E] ?? [];
   }
 

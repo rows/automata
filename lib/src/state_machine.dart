@@ -34,7 +34,7 @@ class StateMachine {
     // Get root's initial nodes and call entry on them with [InitialEvent]
     final entryNodes = rootNode.initialStateNodes;
     for (final node in entryNodes) {
-      node.callEntry(InitialEvent());
+      node.callEntryAction(InitialEvent());
       value.add(node);
     }
 
@@ -66,13 +66,6 @@ class StateMachine {
   /// transition is performed.
   void send<E extends Event>(E event) {
     final nodes = value.activeLeafStates();
-    final isInTerminalNode = nodes.any(
-      (element) => element.stateNodeType == StateNodeType.terminal,
-    );
-
-    if (isInTerminalNode) {
-      return;
-    }
 
     final transitions = <TransitionDefinition>[];
     for (final node in nodes) {
@@ -100,6 +93,10 @@ class StateMachine {
   /// Check if the state machine is currently in a given [State].
   bool isInState<S>() {
     return value.isInState<S>();
+  }
+
+  bool matchesStatePath(List<Type> path) {
+    return value.matchesStatePath(path);
   }
 
   @override
