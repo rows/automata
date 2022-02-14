@@ -18,10 +18,21 @@ class StateMachineValue {
         return true;
       }
 
-      if (node.path.any((node) => node.stateType == S)) {
+      if (node.fullPathStateType.contains(S)) {
         return true;
       }
     }
+    return false;
+  }
+
+  bool matchesStatePath(List<Type> path) {
+    final pathSet = path.toSet();
+    for (final node in _activeNodes) {
+      if (node.fullPathStateType.containsAll(pathSet)) {
+        return true;
+      }
+    }
+
     return false;
   }
 
