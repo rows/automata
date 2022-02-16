@@ -171,7 +171,7 @@ class StateNodeDefinition<S extends State> implements StateNode {
       actions: actions,
     );
 
-    _eventTransitionsMap[E] = _eventTransitionsMap[E] ?? [];
+    _eventTransitionsMap[E] ??= <TransitionDefinition>[];
     _eventTransitionsMap[E]!.add(onTransition);
   }
 
@@ -286,6 +286,6 @@ class StateNodeDefinition<S extends State> implements StateNode {
       return stateType.toString();
     }
 
-    return '${path.join(' > ')} > $stateType';
+    return '${path.last} > $stateType';
   }
 }

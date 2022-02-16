@@ -39,7 +39,7 @@ class StateMachine {
 
     // In order to support "eventless transitions" a NullEvent is sent after
     // the initial event is set.
-    send(NullEvent());
+    send(const NullEvent());
   }
 
   /// Dipose [StreamController].
@@ -71,7 +71,7 @@ class StateMachine {
   void send<E extends Event>(E event) {
     final nodes = value.activeLeafStates();
 
-    final transitions = <TransitionDefinition>[];
+    final transitions = <TransitionDefinition>{};
     for (final node in nodes) {
       transitions.addAll(node.getTransitions(event));
     }
@@ -82,16 +82,14 @@ class StateMachine {
 
     for (final transition in transitions) {
       value = transition.trigger(value, event);
-      onTransition?.call(
-        transition.sourceStateNode.stateType,
-        event,
-        transition.targetState,
-      );
+      onTransition?.call(event, value);
 
       _controller.add(value);
     }
 
-    send(NullEvent());
+    if (E != NullEvent) {
+      send(const NullEvent());
+    }
   }
 
   /// Check if the state machine is currently in a given [State].

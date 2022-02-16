@@ -49,8 +49,13 @@ final machine = StateMachine.create(
     ..state<Active>(
       builder: (g) => g..on<OnToggle, Inactive>()
     ),
-  onTransition: (source, event, target) => 
-    print('$source $event $target'),
+  onTransition: (e, value) => print(
+    '''
+    ## Transition::
+    Received Event: $e
+    Value: $value
+    ''',
+  ),
 );
 
 machine.send(OnMelted());

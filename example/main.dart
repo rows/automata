@@ -24,8 +24,12 @@ void main() {
           ..onExit((event) => print('< Exit Active'))
           ..on<OnToggle, Inactive>(),
       ),
-    onTransition: (source, e, target) => print(
-      'Transition:: Received Event $e in State $source transitioning to State $target',
+    onTransition: (e, value) => print(
+      '''
+      ## Transition::
+      Received Event: $e
+      Value: $value
+      ''',
     ),
   );
 

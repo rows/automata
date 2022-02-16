@@ -70,16 +70,8 @@ class TransitionDefinition<S extends State, E extends Event,
           .where((element) => element.path.contains(source)),
     );
 
-    nodes.addAll(
-      source.path.where((element) => !target.path.contains(element)),
-    );
-
-    for (final node in value.activeLeafStates()) {
-      if (node.path.contains(target)) {
-        nodes.add(node);
-      }
-    }
-
+    // TODO: source is only added for "external" transitions,
+    //  transitions default to external unless explicitly set to internal
     nodes.add(source);
 
     return nodes;
@@ -106,17 +98,6 @@ class TransitionDefinition<S extends State, E extends Event,
       ),
     );
 
-    final items = target.path.where(
-      (element) => !source.path.contains(element),
-    );
-    for (final node in items) {
-      // TODO: im not yet sure about this yet.
-      //  check parallel_statemachine_test for the test wich calls OnTickFirst.
-      if (target.parentNode?.stateNodeType == StateNodeType.parallel) {
-        nodes.addAll(node.initialStateNodes);
-      }
-    }
-
     nodes.add(target);
     nodes.addAll(target.initialStateNodes);
 
@@ -125,7 +106,7 @@ class TransitionDefinition<S extends State, E extends Event,
 
   /// Trigger this transition for the given event.
   StateMachineValue trigger(StateMachineValue value, E e) {
-    final sourceLeaf = sourceStateNode;
+    StateNodeDefinition sourceLeaf = sourceStateNode;
 
     // First look for the target leaf within the compound root and only
     // afterwards fallback to search from root.
@@ -138,6 +119,15 @@ class TransitionDefinition<S extends State, E extends Event,
 
     if (targetLeaf == null) {
       throw Exception('destination leaf node not found');
+    }
+
+    // If transitioning within a parallel state machine, adjust the source node
+    // to be within the parallel machine
+    if (sourceLeaf.stateNodeType == StateNodeType.parallel &&
+        targetLeaf.path.contains(sourceLeaf)) {
+      sourceLeaf = [...targetLeaf.path, targetLeaf].firstWhere((node) {
+        return !sourceStateNode.path.contains(node) && sourceStateNode != node;
+      });
     }
 
     final exitNodes = _getExitNodes(value, sourceLeaf, targetLeaf);

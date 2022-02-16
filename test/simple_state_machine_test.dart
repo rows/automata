@@ -92,7 +92,7 @@ void main() {
   });
 
   test('should invoke onTransition on all transitions', () {
-    final transitions = <dynamic>[];
+    final transitions = <Event>[];
     final machine = StateMachine.create(
       (g) => g
         ..initial<Solid>()
@@ -100,13 +100,13 @@ void main() {
           builder: (b) => b..on<OnMelted, Liquid>(),
         )
         ..state<Liquid>(),
-      onTransition: (source, event, to) => transitions.add([source, event, to]),
+      onTransition: (event, state) => transitions.add(event),
     );
 
     final event = OnMelted();
     machine.send(event);
 
-    expect(transitions.first, equals([Solid, event, Liquid]));
+    expect(transitions, equals([event]));
   });
 
   test('should call actions on transition', () {

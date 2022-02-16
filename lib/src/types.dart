@@ -1,5 +1,7 @@
 import 'package:meta/meta.dart';
 
+import 'state_machine_value.dart';
+
 /// Base class for all States that you pass to the state machine.
 ///
 /// All your [State] classes MUST extend this [State] class.
@@ -14,7 +16,9 @@ import 'package:meta/meta.dart';
 /// )
 /// ```
 @immutable
-abstract class State {}
+abstract class State {
+  const State();
+}
 
 /// Base class for all Events that you pass to the state machine.
 ///
@@ -36,13 +40,18 @@ abstract class State {}
 /// )
 /// ```
 @immutable
-abstract class Event {}
+abstract class Event {
+  const Event();
+}
 
 /// Pseudo [State] used as root of our state machine.
 abstract class RootState extends State {}
 
 /// Pseudo [Event] used to trigger eventless transitions.
-class NullEvent extends Event {}
+@immutable
+class NullEvent extends Event {
+  const NullEvent();
+}
 
 /// [Event] called when the [StateMachine] is first created to ensure the
 /// initial state is properly set.
@@ -120,7 +129,7 @@ typedef OnEntryAction = void Function(Event? event);
 typedef OnExitAction = void Function(Event? event);
 
 /// A function called on every transition.
-typedef OnTransitionCallback = void Function(Type source, Event e, Type target);
+typedef OnTransitionCallback = void Function(Event e, StateMachineValue value);
 
 /// A function used to compose [StateNode]s into our state machine.
 typedef StateBuilder<S extends State> = void Function(StateNode<S>);
