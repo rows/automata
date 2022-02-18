@@ -10,7 +10,7 @@ void main() {
   });
 
   test(
-    'should transition to initial state when first navigates into a compound state',
+    'should transition to initial when first navigates into a compound state',
     () {
       final machine = _createMachine();
       machine.send(OnMove());
@@ -22,7 +22,7 @@ void main() {
   );
 
   test(
-    'should transition to initial state when first navigates into a parallel state',
+    'should transition to initial when first navigates into a parallel state',
     () {
       final machine = _createMachine();
       machine.send(OnMove());

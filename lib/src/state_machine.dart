@@ -69,7 +69,7 @@ class StateMachine {
   /// In order to support "eventless transitions" a NullEvent is sent when a
   /// transition is performed.
   void send<E extends Event>(E event) {
-    final nodes = value.activeLeafStates();
+    final nodes = value.activeNodes();
 
     final transitions = <TransitionDefinition>{};
     for (final node in nodes) {

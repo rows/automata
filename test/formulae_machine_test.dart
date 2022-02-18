@@ -1,24 +1,10 @@
 import 'package:automata/src/state_machine.dart';
 import 'package:automata/src/types.dart';
-import 'package:mocktail/mocktail.dart';
 import 'package:test/test.dart';
 
-class Watcher {
-  void onEntry(Event? e) {}
-  void onExit(Event? e) {}
-}
-
-class _MockWatcher extends Mock implements Watcher {}
-
 void main() {
-  late Watcher watcher;
-
-  setUp(() {
-    watcher = _MockWatcher();
-  });
-
   test('should set initial state to TypingText', () {
-    final machine = _createMachine(watcher);
+    final machine = _createMachine();
 
     expect(machine.isInState<TypingText>(), isTrue);
     expect(machine.isInState<TypingFormula>(), isFalse);
@@ -27,7 +13,7 @@ void main() {
   test(
     'should stay in TypingText if OnIsFormulaChange has isFormula as false',
     () {
-      final machine = _createMachine(watcher);
+      final machine = _createMachine();
 
       expect(machine.isInState<TypingText>(), isTrue);
       expect(machine.isInState<TypingFormula>(), isFalse);
@@ -42,7 +28,7 @@ void main() {
   test(
     'should move to TypingFormula if OnIsFormulaChange has isFormula as true',
     () {
-      final machine = _createMachine(watcher);
+      final machine = _createMachine();
 
       expect(machine.isInState<TypingText>(), isTrue);
       expect(machine.isInState<TypingFormula>(), isFalse);
@@ -62,7 +48,7 @@ void main() {
     'should keep autocomplete/point state when OnIsFormulaChange is fired as '
     'isFormula as true',
     () {
-      final machine = _createMachine(watcher);
+      final machine = _createMachine();
 
       machine.send(const OnIsFormulaChange(isFormula: true));
       expect(machine.isInState<TypingText>(), isFalse);
@@ -100,7 +86,7 @@ void main() {
   );
 
   test('should move between autocomplete states', () {
-    final machine = _createMachine(watcher);
+    final machine = _createMachine();
 
     machine.send(const OnIsFormulaChange(isFormula: true));
     machine.send(
@@ -130,7 +116,7 @@ void main() {
   });
 
   test('should move between point reference states', () {
-    final machine = _createMachine(watcher);
+    final machine = _createMachine();
 
     machine.send(const OnIsFormulaChange(isFormula: true));
     machine.send(
@@ -158,7 +144,7 @@ void main() {
   });
 
   test('should move between point slot states', () {
-    final machine = _createMachine(watcher);
+    final machine = _createMachine();
 
     machine.send(const OnIsFormulaChange(isFormula: true));
     machine.send(
@@ -186,7 +172,7 @@ void main() {
   });
 
   test('should be able to move back to TypingText', () {
-    final machine = _createMachine(watcher);
+    final machine = _createMachine();
 
     machine.send(const OnIsFormulaChange(isFormula: true));
     machine.send(
@@ -209,7 +195,7 @@ void main() {
 
 /// Creates a [StateMachine] to keep track of autocomplete and P&C states on
 /// the currently formula being composed.
-StateMachine _createMachine(Watcher watcher) {
+StateMachine _createMachine() {
   final machine = StateMachine.create(
     (g) => g
       ..initial<TypingText>()

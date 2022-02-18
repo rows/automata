@@ -2,6 +2,46 @@ import 'state_machine_value.dart';
 import 'state_node.dart';
 import 'types.dart';
 
+enum TransitionType { internal, external }
+
+/// Given a two [StateNodeDefinition] calculate the Least Common Coupound
+/// Ancestor (LCCA), ie the compound [StateNodeDefinition] that contains both
+/// nodes.
+///
+/// See also:
+/// - https://www.w3.org/TR/scxml/#LCCA
+StateNodeDefinition getLeastCommonCompoundAncestor(
+  StateNodeDefinition node1,
+  StateNodeDefinition node2,
+) {
+  if (node1 == node2) {
+    return node1;
+  }
+
+  late final List<StateNodeDefinition> fromPath;
+  late final StateNodeDefinition targetNode;
+  if (node1.path.length > node2.path.length) {
+    fromPath = [...node1.path, node1];
+    targetNode = node2;
+  } else {
+    fromPath = [...node2.path, node2];
+    targetNode = node1;
+  }
+
+  for (var index = 0; index != fromPath.length; index += 1) {
+    final node = fromPath[index];
+
+    if (node.parentNode?.stateNodeType != StateNodeType.compound) {
+      continue;
+    }
+
+    if (index >= targetNode.path.length || node != targetNode.path[index]) {
+      return fromPath[index - 1];
+    }
+  }
+  return fromPath.first;
+}
+
 /// Defines a transition to be attached to a [StateNodeDefinition].
 ///
 /// For a given [Event] the [StateMachine] should transition from [S] to
@@ -11,8 +51,14 @@ import 'types.dart';
 /// subjected to a [condition] before being approved to change the state
 /// machine's state
 ///
+/// See also:
+/// - https://www.w3.org/TR/scxml/#transition
+/// - https://www.w3.org/TR/scxml/#SelectingTransitions
 class TransitionDefinition<S extends State, E extends Event,
     TargetState extends State> {
+  /// Defines the [TransitionType].
+  final TransitionType type;
+
   /// If this [TransitionDefinition] is trigger [targetState] will be the new
   /// [State]
   Type targetState;
@@ -26,12 +72,30 @@ class TransitionDefinition<S extends State, E extends Event,
   /// List of side effect functions to be called on successful transition.
   final List<Action<E>>? actions;
 
+  // First look for the target leaf within the compound root and only
+  // afterwards fallback to search from root.
+  late final StateNodeDefinition targetStateNode = (() {
+    StateNodeDefinition? targetLeaf;
+    if (sourceStateNode.parentNode?.stateNodeType == StateNodeType.compound) {
+      targetLeaf = _findLeaf(targetState, sourceStateNode.parentNode!);
+    }
+
+    targetLeaf ??= _findLeaf(targetState, sourceStateNode.rootNode);
+
+    if (targetLeaf == null) {
+      throw Exception('destination leaf node not found');
+    }
+
+    return targetLeaf;
+  })();
+
   TransitionDefinition({
     required this.sourceStateNode,
     required this.targetState,
+    TransitionType? type,
     this.condition,
     this.actions,
-  });
+  }) : type = type ?? TransitionType.external;
 
   /// Given a [Type] and a [StateNodeDefinition] recursively find the node
   /// that contains that [Type].
@@ -64,15 +128,14 @@ class TransitionDefinition<S extends State, E extends Event,
   ) {
     final nodes = <StateNodeDefinition>{};
 
-    nodes.addAll(
-      value
-          .activeLeafStates()
-          .where((element) => element.path.contains(source)),
-    );
+    final activeNodes = value.activeNodes();
+    final lcca = getLeastCommonCompoundAncestor(source, target);
 
-    // TODO: source is only added for "external" transitions,
-    //  transitions default to external unless explicitly set to internal
-    nodes.add(source);
+    nodes.addAll(activeNodes.where((element) => element.path.contains(lcca)));
+
+    if (type == TransitionType.external) {
+      nodes.add(source);
+    }
 
     return nodes;
   }
@@ -87,14 +150,18 @@ class TransitionDefinition<S extends State, E extends Event,
   ) {
     final nodes = <StateNodeDefinition>{};
 
-    // Get all nodes in the to path that are not yet part of the value.
-    final activeNodes = value.activeLeafStates();
+    final lcca = getLeastCommonCompoundAncestor(source, target);
+
     nodes.addAll(
       target.path.where(
-        (element) => !activeNodes.any(
-          (activeNode) =>
-              element == activeNode || activeNode.path.contains(element),
-        ),
+        (element) {
+          // Do not include source if its a internal transition
+          if (type == TransitionType.internal && element == source) {
+            return false;
+          }
+
+          return !lcca.path.contains(element);
+        },
       ),
     );
 
@@ -106,20 +173,8 @@ class TransitionDefinition<S extends State, E extends Event,
 
   /// Trigger this transition for the given event.
   StateMachineValue trigger(StateMachineValue value, E e) {
-    StateNodeDefinition sourceLeaf = sourceStateNode;
-
-    // First look for the target leaf within the compound root and only
-    // afterwards fallback to search from root.
-    StateNodeDefinition? targetLeaf;
-    if (sourceLeaf.parentNode?.stateNodeType == StateNodeType.compound) {
-      targetLeaf = _findLeaf(targetState, sourceLeaf.parentNode!);
-    }
-
-    targetLeaf ??= _findLeaf(targetState, sourceLeaf.rootNode);
-
-    if (targetLeaf == null) {
-      throw Exception('destination leaf node not found');
-    }
+    var sourceLeaf = sourceStateNode;
+    final targetLeaf = targetStateNode;
 
     // If transitioning within a parallel state machine, adjust the source node
     // to be within the parallel machine
@@ -135,13 +190,7 @@ class TransitionDefinition<S extends State, E extends Event,
 
     // trigger all on exits
     for (final node in exitNodes) {
-      final isEntrying = entryNodes.any(
-        (entryNode) => entryNode == node || entryNode.path.contains(node),
-      );
-
-      if (!isEntrying) {
-        node.callExitAction(e);
-      }
+      node.callExitAction(e);
     }
 
     // trigger all actions
@@ -153,9 +202,7 @@ class TransitionDefinition<S extends State, E extends Event,
 
     // trigger all on entrys based on common ancestor
     for (final node in entryNodes) {
-      if (!value.activeLeafStates().contains(node)) {
-        node.callEntryAction(e);
-      }
+      node.callEntryAction(e);
     }
 
     // update state of mind
@@ -186,7 +233,7 @@ class TransitionDefinition<S extends State, E extends Event,
       final parallelParentMachine = parentNode.parentNode;
       if (parallelParentMachine?.stateNodeType == StateNodeType.parallel) {
         var allParallelNodesInFinalState = true;
-        for (final activeNode in value.activeLeafStates()) {
+        for (final activeNode in value.activeNodes()) {
           if (activeNode.path.contains(parallelParentMachine) &&
               activeNode.stateNodeType != StateNodeType.terminal) {
             allParallelNodesInFinalState = false;

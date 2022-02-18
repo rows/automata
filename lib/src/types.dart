@@ -1,6 +1,7 @@
 import 'package:meta/meta.dart';
 
 import 'state_machine_value.dart';
+import 'transition_definition.dart';
 
 /// Base class for all States that you pass to the state machine.
 ///
@@ -92,6 +93,7 @@ abstract class StateNode<S extends State> {
   /// Attach a [TransitionDefinition] to allow to transition from this
   /// this [StateNode] to a given [StateNode] for a specific [Event].
   void on<E extends Event, Target extends State>({
+    TransitionType type,
     GuardCondition<E>? condition,
     List<Action<E>>? actions,
   });
