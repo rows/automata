@@ -27,10 +27,10 @@ void main() {
 
       expect(machine.isInState<Playing>(), isTrue);
 
-      machine.send(OnAwardPoints(points: 50));
+      machine.send(const OnAwardPoints(points: 50));
       expect(machine.isInState<Playing>(), isTrue);
 
-      machine.send(OnAwardPoints(points: -110));
+      machine.send(const OnAwardPoints(points: -110));
 
       expect(machine.isInState<Lose>(), isTrue);
       expect(machine.isInState<Win>(), isFalse);
@@ -42,7 +42,7 @@ void main() {
 
       expect(machine.isInState<Playing>(), isTrue);
 
-      machine.send(OnAwardPoints(points: 100));
+      machine.send(const OnAwardPoints(points: 100));
 
       expect(machine.isInState<Lose>(), isFalse);
       expect(machine.isInState<Win>(), isTrue);
@@ -65,7 +65,7 @@ class Lose extends State {}
 class OnAwardPoints extends Event {
   final int points;
 
-  OnAwardPoints({required this.points});
+  const OnAwardPoints({required this.points});
 }
 
 StateMachine _createMachine<S extends State>(Scoreboard scoreboard) {

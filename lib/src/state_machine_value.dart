@@ -37,7 +37,7 @@ class StateMachineValue {
   }
 
   /// Returns all the currently active [StateNodeDefinition].
-  List<StateNodeDefinition> activeLeafStates() {
+  List<StateNodeDefinition> activeNodes() {
     return _activeNodes.toList();
   }
 

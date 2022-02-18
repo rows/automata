@@ -69,7 +69,7 @@ class StateNodeDefinition<S extends State> implements StateNode {
   })();
 
   /// Compute the initialStateValue.
-  late final initialStateNodes = (() {
+  late final List<StateNodeDefinition> initialStateNodes = (() {
     // Reference:
     //  "when the state machine enters the parent <parallel> state, it also
     //  enters each child state"
@@ -104,24 +104,6 @@ class StateNodeDefinition<S extends State> implements StateNode {
 
     // If atomic or terminal there is no initial node.
     return <StateNodeDefinition>[];
-  })();
-
-  /// When transitioning in a parallel state machine we first want to make sure
-  /// we look for the target node within the parallel machine before searching
-  /// from the root node.
-  ///
-  /// This is crucial when you have nodes with the same state in different
-  /// parallel states.
-  ///
-  /// TODO: we should be solvable with LCCA (Least common coumpound ancestor)
-  ///  to investigate at later date.
-  late final StateNodeDefinition compoundRootNode = (() {
-    for (final node in path.reversed) {
-      if (node.stateNodeType == StateNodeType.compound) {
-        return node;
-      }
-    }
-    return rootNode;
   })();
 
   StateNodeDefinition({
@@ -161,6 +143,7 @@ class StateNodeDefinition<S extends State> implements StateNode {
   /// this [StateNode] to a given [StateNode] for a specific [Event].
   @override
   void on<E extends Event, TargetState extends State>({
+    TransitionType? type,
     GuardCondition<E>? condition,
     List<Action<E>>? actions,
   }) {
@@ -169,6 +152,7 @@ class StateNodeDefinition<S extends State> implements StateNode {
       targetState: TargetState,
       condition: condition,
       actions: actions,
+      type: type,
     );
 
     _eventTransitionsMap[E] ??= <TransitionDefinition>[];
@@ -254,6 +238,14 @@ class StateNodeDefinition<S extends State> implements StateNode {
   /// same event, we should only return the first one that returns true from
   /// the [GuardCondition].
   ///
+  ///  A transition T is enabled by named event E in atomic state S if
+  ///   a) T's source state is S or an ancestor of S,and
+  ///   b) T matches E's name (see 3.12.1 Event Descriptors) and
+  ///   c) T lacks a 'cond' attribute or its 'cond' attribute evaluates to
+  ///     "true".
+  ///
+  /// See also:
+  ///  - https://www.w3.org/TR/scxml/#SelectingTransitions
   List<TransitionDefinition> getTransitions<E extends Event>(E event) {
     final transitions = <TransitionDefinition>[];
 

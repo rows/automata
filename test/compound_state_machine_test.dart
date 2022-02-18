@@ -2,19 +2,14 @@ import 'package:automata/automata.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:test/test.dart';
 
-class Watcher {
-  void onEntry(Event? e) {}
-  void onExit(Event? e) {}
-}
-
-class _MockWatcher extends Mock implements Watcher {}
+import 'utils/watcher.dart';
 
 void main() {
   late Watcher watcher;
   late Human human;
 
   setUp(() {
-    watcher = Watcher();
+    watcher = MockWatcher();
     human = Human();
   });
 
@@ -76,7 +71,7 @@ void main() {
     expect(machine.isInState<Purgatory>(), isTrue);
 
     /// We should be MiddleAged but Alive should not be a separate path.
-    expect(machine.value.activeLeafStates().length, 1);
+    expect(machine.value.activeNodes().length, 1);
   });
 
   test('should transition in compound state.', () async {
@@ -90,7 +85,6 @@ void main() {
   });
 
   test('calls onExit/onEntry', () async {
-    final watcher = _MockWatcher();
     final machine = await _createMachine<Alive>(watcher, human);
 
     /// age until they are middle aged.
@@ -101,23 +95,23 @@ void main() {
 
     machine.send(onBirthday);
 
-    verify(() => watcher.onExit(onBirthday)).called(1);
-    verify(() => watcher.onEntry(onBirthday)).called(1);
+    verify(() => watcher.onExit(Young, onBirthday)).called(19);
+    verify(() => watcher.onEntry(MiddleAged, onBirthday)).called(1);
     expect(machine.isInState<Alive>(), isTrue);
     expect(machine.isInState<Young>(), isFalse);
     expect(machine.isInState<MiddleAged>(), isTrue);
   });
 
   test('should call onExit/onEntry for compound state change', () async {
-    final watcher = _MockWatcher();
     final machine = await _createMachine<Alive>(watcher, human);
 
-    /// age this boy until they are middle aged.
     final onDeath = OnDeath();
     machine.send(onDeath);
 
-    verify(() => watcher.onExit(onDeath)).called(2);
-    verify(() => watcher.onEntry(onDeath)).called(2);
+    verify(() => watcher.onExit(Alive, onDeath)).called(1);
+    verify(() => watcher.onExit(Young, onDeath)).called(1);
+    verify(() => watcher.onEntry(Dead, onDeath)).called(1);
+    verify(() => watcher.onEntry(Purgatory, onDeath)).called(1);
 
     expect(machine.isInState<Dead>(), isTrue);
     expect(machine.isInState<Purgatory>(), isTrue);
@@ -135,11 +129,8 @@ Future<StateMachine> _createMachine<S extends State>(
       ..state<Alive>(
         builder: (b) => b
           ..initial<Young>()
-          ..onEntry((e) async {
-            // print('entrying alive...');
-            watcher.onEntry(e);
-          })
-          ..onExit((e) async => watcher.onExit(e))
+          ..onEntry((e) => watcher.onEntry(Alive, e))
+          ..onExit((e) => watcher.onExit(Alive, e))
 
           // Transitions
           ..on<OnBirthday, Young>(
@@ -173,27 +164,20 @@ Future<StateMachine> _createMachine<S extends State>(
 
           // States
           ..state<Young>(
-            builder: (b) => b..onExit((e) async => watcher.onExit(e)),
+            builder: (b) => b..onExit((e) => watcher.onExit(Young, e)),
           )
           ..state<MiddleAged>(
-            builder: (b) => b
-              ..onEntry((e) async {
-                // print('entrying MiddleAged...');
-                watcher.onEntry(e);
-              }),
+            builder: (b) => b..onEntry((e) => watcher.onEntry(MiddleAged, e)),
           )
           ..state<Old>(),
       )
       ..state<Dead>(
         builder: (b) => b
           ..initial<Purgatory>()
-          ..onEntry((e) async {
-            // print('entrying Dead...');
-            watcher.onEntry(e);
-          })
+          ..onEntry((e) => watcher.onEntry(Dead, e))
           ..state<Purgatory>(
             builder: (b) => b
-              ..onEntry((e) async => watcher.onEntry(e))
+              ..onEntry((e) => watcher.onEntry(Purgatory, e))
               ..on<OnJudged, Good>(
                 condition: (e) => e.judgement == Judgement.good,
               )
