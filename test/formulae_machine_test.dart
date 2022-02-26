@@ -1,10 +1,19 @@
 import 'package:automata/src/state_machine.dart';
 import 'package:automata/src/types.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:test/test.dart';
 
+import 'utils/watcher.dart';
+
 void main() {
+  late Watcher watcher;
+
+  setUp(() {
+    watcher = MockWatcher();
+  });
+
   test('should set initial state to TypingText', () {
-    final machine = _createMachine();
+    final machine = _createMachine(watcher);
 
     expect(machine.isInState<TypingText>(), isTrue);
     expect(machine.isInState<TypingFormula>(), isFalse);
@@ -13,7 +22,7 @@ void main() {
   test(
     'should stay in TypingText if OnIsFormulaChange has isFormula as false',
     () {
-      final machine = _createMachine();
+      final machine = _createMachine(watcher);
 
       expect(machine.isInState<TypingText>(), isTrue);
       expect(machine.isInState<TypingFormula>(), isFalse);
@@ -28,7 +37,7 @@ void main() {
   test(
     'should move to TypingFormula if OnIsFormulaChange has isFormula as true',
     () {
-      final machine = _createMachine();
+      final machine = _createMachine(watcher);
 
       expect(machine.isInState<TypingText>(), isTrue);
       expect(machine.isInState<TypingFormula>(), isFalse);
@@ -48,7 +57,7 @@ void main() {
     'should keep autocomplete/point state when OnIsFormulaChange is fired as '
     'isFormula as true',
     () {
-      final machine = _createMachine();
+      final machine = _createMachine(watcher);
 
       machine.send(const OnIsFormulaChange(isFormula: true));
       expect(machine.isInState<TypingText>(), isFalse);
@@ -86,7 +95,7 @@ void main() {
   );
 
   test('should move between autocomplete states', () {
-    final machine = _createMachine();
+    final machine = _createMachine(watcher);
 
     machine.send(const OnIsFormulaChange(isFormula: true));
     machine.send(
@@ -116,7 +125,7 @@ void main() {
   });
 
   test('should move between point reference states', () {
-    final machine = _createMachine();
+    final machine = _createMachine(watcher);
 
     machine.send(const OnIsFormulaChange(isFormula: true));
     machine.send(
@@ -144,7 +153,7 @@ void main() {
   });
 
   test('should move between point slot states', () {
-    final machine = _createMachine();
+    final machine = _createMachine(watcher);
 
     machine.send(const OnIsFormulaChange(isFormula: true));
     machine.send(
@@ -172,39 +181,44 @@ void main() {
   });
 
   test('should be able to move back to TypingText', () {
-    final machine = _createMachine();
+    final machine = _createMachine(watcher);
 
     machine.send(const OnIsFormulaChange(isFormula: true));
     machine.send(
-      const OnCaretPositionChange(canTransitionToPointReference: true),
+      const OnCaretPositionChange(canTransitionToAutocompleteList: true),
     );
 
+    expect(machine.isInState<TypingText>(), isFalse);
+    expect(machine.isInState<TypingFormula>(), isTrue);
     expect(machine.isInState<Point>(), isTrue);
-    expect(machine.isInState<PointReference>(), isTrue);
-    expect(machine.isInState<PointReferenceDisabled>(), isTrue);
+    expect(machine.isInState<Autocomplete>(), isTrue);
+    expect(machine.isInState<AutocompleteList>(), isTrue);
+    reset(watcher);
 
-    machine.send(const OnIsFormulaChange(isFormula: false));
+    const event = OnIsFormulaChange(isFormula: false);
+    machine.send(event);
 
     expect(machine.isInState<TypingText>(), isTrue);
     expect(machine.isInState<TypingFormula>(), isFalse);
     expect(machine.isInState<Point>(), isFalse);
-    expect(machine.isInState<PointReference>(), isFalse);
-    expect(machine.isInState<PointReferenceDisabled>(), isFalse);
+    expect(machine.isInState<Autocomplete>(), isFalse);
+    expect(machine.isInState<AutocompleteList>(), isFalse);
+    expect(machine.isInState<AutocompleteUnavailable>(), isFalse);
+
+    verify(() => watcher.onExit(Autocomplete, event)).called(1);
   });
 }
 
 /// Creates a [StateMachine] to keep track of autocomplete and P&C states on
 /// the currently formula being composed.
-StateMachine _createMachine() {
+StateMachine _createMachine(Watcher watcher) {
   final machine = StateMachine.create(
     (g) => g
       ..initial<TypingText>()
       ..state<TypingText>(
         builder: (b) => b
           // When value changes it forks into the two parallel state machines
-          ..on<OnIsFormulaChange, TypingFormula>(
-            condition: (e) => e.isFormula,
-          ),
+          ..on<OnIsFormulaChange, TypingFormula>(condition: (e) => e.isFormula),
       )
 
       /// TypingFormula is a pseudo-state, it forks into two parallel
@@ -219,6 +233,7 @@ StateMachine _createMachine() {
           ..state<Autocomplete>(
             builder: (b) => b
               ..initial<AutocompleteUnavailable>()
+              ..onExit((event) => watcher.onExit(Autocomplete, event))
 
               // Autocomplete events
               ..on<OnCaretPositionChange, AutocompleteList>(
@@ -230,12 +245,33 @@ StateMachine _createMachine() {
               ..on<OnCaretPositionChange, AutocompleteUnavailable>()
 
               // Autocomplete states
-              ..state<AutocompleteList>(builder: (b) => b)
-              ..state<AutocompleteDetails>(builder: (b) => b)
-              ..state<AutocompleteUnavailable>(builder: (b) => b),
+              ..state<AutocompleteList>(
+                builder: (b) => b
+                  ..on<OnResetInteraction, AutocompleteUnavailable>()
+                  ..always<AutocompleteList>(
+                    actions: [
+                      (event) => watcher.onAlways(AutocompleteList, event),
+                    ],
+                  ),
+              )
+              ..state<AutocompleteDetails>(
+                builder: (b) => b
+                  ..on<OnResetInteraction, AutocompleteUnavailable>()
+                  ..always<AutocompleteDetails>(
+                    actions: [
+                      (event) => watcher.onAlways(AutocompleteDetails, event),
+                    ],
+                  ),
+              )
+              ..state<AutocompleteUnavailable>(
+                builder: (b) => b
+                  ..onEntry(
+                    (event) => watcher.onEntry(AutocompleteUnavailable, event),
+                  ),
+              ),
           )
 
-          // Point mode state-mahcine
+          // Point mode state-machine
           ..state<Point>(
             builder: (b) => b
               ..initial<PointUnavailable>()
@@ -255,6 +291,7 @@ StateMachine _createMachine() {
                   ..initial<PointSlotEnabled>()
                   ..state<PointSlotEnabled>(
                     builder: (b) => b
+                      ..on<OnResetInteraction, PointSlotDisabled>()
                       ..on<OnTogglePoint, PointSlotDisabled>()
                       ..on<OnDisablePoint, PointSlotDisabled>()
                       ..on<OnCaretPositionChange, PointReferenceEnabled>(
@@ -280,6 +317,7 @@ StateMachine _createMachine() {
                   ..initial<PointReferenceDisabled>()
                   ..state<PointReferenceEnabled>(
                     builder: (b) => b
+                      ..on<OnResetInteraction, PointReferenceDisabled>()
                       ..on<OnTogglePoint, PointReferenceDisabled>()
                       ..on<OnDisablePoint, PointReferenceDisabled>()
                       ..on<OnCaretPositionChange, PointSlot>(
@@ -358,6 +396,10 @@ class OnCaretPositionChange implements Event {
     this.canTransitionToPointReference = false,
     this.canTransitionToPointSlot = false,
   });
+}
+
+class OnResetInteraction implements Event {
+  const OnResetInteraction();
 }
 
 bool canTransitionToAutocompleteList(OnCaretPositionChange e) {

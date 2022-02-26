@@ -245,7 +245,7 @@ class StateNodeDefinition<S extends State> implements StateNode {
   ///     "true".
   ///
   /// See also:
-  ///  - https://www.w3.org/TR/scxml/#SelectingTransitions
+  ///  - [SCXML: Selecting Transitions](https://www.w3.org/TR/scxml/#SelectingTransitions)
   List<TransitionDefinition> getTransitions<E extends Event>(E event) {
     final transitions = <TransitionDefinition>[];
 

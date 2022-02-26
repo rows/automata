@@ -9,7 +9,7 @@ enum TransitionType { internal, external }
 /// nodes.
 ///
 /// See also:
-/// - https://www.w3.org/TR/scxml/#LCCA
+/// - [SCXML: LCCA](https://www.w3.org/TR/scxml/#LCCA)
 StateNodeDefinition getLeastCommonCompoundAncestor(
   StateNodeDefinition node1,
   StateNodeDefinition node2,
@@ -52,8 +52,8 @@ StateNodeDefinition getLeastCommonCompoundAncestor(
 /// machine's state
 ///
 /// See also:
-/// - https://www.w3.org/TR/scxml/#transition
-/// - https://www.w3.org/TR/scxml/#SelectingTransitions
+/// - [SCXML: Transition](https://www.w3.org/TR/scxml/#transition)
+/// - [SCXML: Selecting Transitions](https://www.w3.org/TR/scxml/#SelectingTransitions)
 class TransitionDefinition<S extends State, E extends Event,
     TargetState extends State> {
   /// Defines the [TransitionType].
@@ -127,14 +127,20 @@ class TransitionDefinition<S extends State, E extends Event,
     StateNodeDefinition target,
   ) {
     final nodes = <StateNodeDefinition>{};
-
-    final activeNodes = value.activeNodes();
     final lcca = getLeastCommonCompoundAncestor(source, target);
 
-    nodes.addAll(activeNodes.where((element) => element.path.contains(lcca)));
+    for (final node in value.activeNodes) {
+      nodes.addAll(
+        node.path.where((element) => element.path.contains(lcca)),
+      );
 
-    if (type == TransitionType.external) {
-      nodes.add(source);
+      if (node.path.contains(lcca)) {
+        nodes.add(node);
+      }
+    }
+
+    if (type == TransitionType.internal) {
+      nodes.remove(source);
     }
 
     return nodes;
@@ -233,7 +239,7 @@ class TransitionDefinition<S extends State, E extends Event,
       final parallelParentMachine = parentNode.parentNode;
       if (parallelParentMachine?.stateNodeType == StateNodeType.parallel) {
         var allParallelNodesInFinalState = true;
-        for (final activeNode in value.activeNodes()) {
+        for (final activeNode in value.activeNodes) {
           if (activeNode.path.contains(parallelParentMachine) &&
               activeNode.stateNodeType != StateNodeType.terminal) {
             allParallelNodesInFinalState = false;

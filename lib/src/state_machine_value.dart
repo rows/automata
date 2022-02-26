@@ -10,6 +10,9 @@ class StateMachineValue {
 
   StateMachineValue(StateNodeDefinition node) : _activeNodes = {node};
 
+  /// Returns all the currently active [StateNodeDefinition].
+  Iterable<StateNodeDefinition> get activeNodes => _activeNodes;
+
   /// Check if the given [State] is in the path of any of the currently
   /// active [StateNodeDefinition].
   bool isInState<S>() {
@@ -34,11 +37,6 @@ class StateMachineValue {
     }
 
     return false;
-  }
-
-  /// Returns all the currently active [StateNodeDefinition].
-  List<StateNodeDefinition> activeNodes() {
-    return _activeNodes.toList();
   }
 
   /// Add a new active [StateNodeDefinition].
