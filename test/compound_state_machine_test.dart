@@ -71,7 +71,7 @@ void main() {
     expect(machine.isInState<Purgatory>(), isTrue);
 
     /// We should be MiddleAged but Alive should not be a separate path.
-    expect(machine.value.activeNodes().length, 1);
+    expect(machine.value.activeNodes.length, 1);
   });
 
   test('should transition in compound state.', () async {
