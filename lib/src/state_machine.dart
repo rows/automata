@@ -33,7 +33,7 @@ class StateMachine {
     // Get root's initial nodes and call entry on them with [InitialEvent]
     final entryNodes = rootNode.initialStateNodes;
     for (final node in entryNodes) {
-      node.callEntryAction(InitialEvent());
+      node.callEntryAction(value, InitialEvent());
       value.add(node);
     }
 
@@ -68,7 +68,7 @@ class StateMachine {
   ///
   /// In order to support "eventless transitions" a NullEvent is sent when a
   /// transition is performed.
-  void send<E extends Event>(E event) {
+  void send<E extends AutomataEvent>(E event) {
     final nodes = value.activeNodes;
 
     final transitions = <TransitionDefinition>{};
@@ -92,11 +92,12 @@ class StateMachine {
     }
   }
 
-  /// Check if the state machine is currently in a given [State].
+  /// Check if the state machine is currently in a given [AutomataState].
   bool isInState<S>() {
     return value.isInState<S>();
   }
 
+  /// Check if the state machine has any value that matches the given path.
   bool matchesStatePath(List<Type> path) {
     return value.matchesStatePath(path);
   }

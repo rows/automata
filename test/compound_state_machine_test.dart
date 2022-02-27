@@ -119,7 +119,7 @@ void main() {
 }
 
 // https://xstate.js.org/viz/?gist=6db962fed919174cba71cde5731452e1
-Future<StateMachine> _createMachine<S extends State>(
+Future<StateMachine> _createMachine<S extends AutomataState>(
   Watcher watcher,
   Human human,
 ) async {
@@ -215,41 +215,41 @@ class Human {
   String toString() => 'Human $age';
 }
 
-class Alive implements State {}
+class Alive implements AutomataState {}
 
-class Dead implements State {}
+class Dead implements AutomataState {}
 
 class Young extends Alive {}
 
-class MiddleAged implements State {}
+class MiddleAged implements AutomataState {}
 
-class Old implements State {}
+class Old implements AutomataState {}
 
-class Purgatory implements State {}
+class Purgatory implements AutomataState {}
 
-class Matrix implements State {}
+class Matrix implements AutomataState {}
 
-class InHeaven implements State {}
+class InHeaven implements AutomataState {}
 
-class InHell implements State {}
+class InHell implements AutomataState {}
 
-class Grouped implements State {}
+class Grouped implements AutomataState {}
 
-class Good implements State {}
+class Good implements AutomataState {}
 
-class Bad implements State {}
+class Bad implements AutomataState {}
 
-class Ugly implements State {}
+class Ugly implements AutomataState {}
 
 /// events
 
-class OnBirthday implements Event {}
+class OnBirthday implements AutomataEvent {}
 
-class OnDeath implements Event {}
+class OnDeath implements AutomataEvent {}
 
 enum Judgement { good, bad, ugly, morallyAmbiguous }
 
-class OnJudged implements Event {
+class OnJudged implements AutomataEvent {
   final Judgement judgement;
 
   const OnJudged(this.judgement);

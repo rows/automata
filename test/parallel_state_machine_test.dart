@@ -28,29 +28,29 @@ StateMachine createMachine() {
   return machine;
 }
 
-class OnKickStart implements Event {}
+class OnKickStart implements AutomataEvent {}
 
-class Main implements State {}
+class Main implements AutomataState {}
 
-class Start implements State {}
+class Start implements AutomataState {}
 
-class First implements State {}
+class First implements AutomataState {}
 
-class Second implements State {}
+class Second implements AutomataState {}
 
-class One implements State {}
+class One implements AutomataState {}
 
-class Two implements State {}
+class Two implements AutomataState {}
 
-class Three implements State {}
+class Three implements AutomataState {}
 
-class Four implements State {}
+class Four implements AutomataState {}
 
-class OnTickFirst implements Event {}
+class OnTickFirst implements AutomataEvent {}
 
-class OnTickSecond implements Event {}
+class OnTickSecond implements AutomataEvent {}
 
-class OnToggle implements Event {}
+class OnToggle implements AutomataEvent {}
 
 void main() {
   test('should properly define initial state', () async {

@@ -71,7 +71,7 @@ void main() {
       watcher = MockWatcher();
     });
 
-    StateMachine _createMachine<S extends State>({
+    StateMachine _createMachine<S extends AutomataState>({
       required TransitionType transitionType,
     }) {
       return StateMachine.create(
@@ -131,26 +131,26 @@ void main() {
 }
 
 @immutable
-class OnEvent1 extends Event {
+class OnEvent1 extends AutomataEvent {
   const OnEvent1();
 }
 
-class State1 extends State {}
+class State1 extends AutomataState {}
 
-class State2 extends State {}
+class State2 extends AutomataState {}
 
-class State11 extends State {}
+class State11 extends AutomataState {}
 
-class State12 extends State {}
+class State12 extends AutomataState {}
 
-class State21 extends State {}
+class State21 extends AutomataState {}
 
-class State22 extends State {}
+class State22 extends AutomataState {}
 
-class State31 extends State {}
+class State31 extends AutomataState {}
 
-class State32 extends State {}
+class State32 extends AutomataState {}
 
-class State41 extends State {}
+class State41 extends AutomataState {}
 
-class State42 extends State {}
+class State42 extends AutomataState {}

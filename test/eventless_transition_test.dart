@@ -56,19 +56,19 @@ class Scoreboard {
   Scoreboard({this.points = 0});
 }
 
-class Playing extends State {}
+class Playing extends AutomataState {}
 
-class Win extends State {}
+class Win extends AutomataState {}
 
-class Lose extends State {}
+class Lose extends AutomataState {}
 
-class OnAwardPoints extends Event {
+class OnAwardPoints extends AutomataEvent {
   final int points;
 
   const OnAwardPoints({required this.points});
 }
 
-StateMachine _createMachine<S extends State>(Scoreboard scoreboard) {
+StateMachine _createMachine<S extends AutomataState>(Scoreboard scoreboard) {
   return StateMachine.create(
     (g) => g
       ..initial<Playing>()

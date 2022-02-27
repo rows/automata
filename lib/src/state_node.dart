@@ -1,11 +1,13 @@
+import 'package:automata/src/invoke_definition.dart';
 import 'package:collection/collection.dart';
 
+import 'state_machine_value.dart';
 import 'transition_definition.dart';
 import 'types.dart';
 
 /// TODO: Can StateNodes have a `data` property that is passed into the
 ///  condition of the onDone? according to XState, it does. Check reference.
-class OnDone<E extends Event> {
+class OnDone<E extends AutomataEvent> {
   final List<Action<E>>? actions;
 
   OnDone({required this.actions});
@@ -15,12 +17,12 @@ class OnDone<E extends Event> {
 ///
 /// It includes some methods that should not be called outside of the scope
 /// of this library.
-class StateNodeDefinition<S extends State> implements StateNode {
+class StateNodeDefinition<S extends AutomataState> implements StateNode {
   /// Current node's initial state.
   /// Should be null in case of a leaf node.
   Type? _initialState;
 
-  /// [State] associated with this [StateNodeDefinition].
+  /// [AutomataState] associated with this [StateNodeDefinition].
   late final Type stateType;
 
   /// Path of [StateNodeDefinition] from the rootNode up until this node.
@@ -39,9 +41,11 @@ class StateNodeDefinition<S extends State> implements StateNode {
   /// List of [StateNodeDefinition].
   Map<Type, StateNodeDefinition> childNodes = {};
 
-  /// Maps of [Event]s to [TransitionDefinition] available for this
+  /// Maps of [AutomataEvent]s to [TransitionDefinition] available for this
   /// [StateNodeDefinition].
   final Map<Type, List<TransitionDefinition>> _eventTransitionsMap = {};
+
+  InvokeDefinition? _invoke;
 
   /// Action invoked on entry this [StateNodeDefinition].
   OnEntryAction? _onEntryAction;
@@ -117,19 +121,20 @@ class StateNodeDefinition<S extends State> implements StateNode {
   /// [path].
   StateNodeDefinition get rootNode => path.isEmpty ? this : path.first;
 
-  /// Defines the initial [State].
+  /// Defines the initial [AutomataState].
   /// Used in [StateNode] of type [StateNodeType.compound].
   @override
-  void initial<I extends State>() {
+  void initial<I extends AutomataState>() {
     _initialState = I;
   }
 
-  /// Attach a [StateNode] of a given [State].
+  /// Attach a [StateNode] of a given [AutomataState].
   ///
   /// Optionally it can define a [StateNodeType], if no specific type is
   /// provided then one its inferred.
   @override
-  void state<I extends State>({StateBuilder? builder, StateNodeType? type}) {
+  void state<I extends AutomataState>(
+      {StateBuilder? builder, StateNodeType? type}) {
     final newStateNode = StateNodeDefinition<I>(
       parentNode: this,
       stateNodeType: type,
@@ -140,9 +145,9 @@ class StateNodeDefinition<S extends State> implements StateNode {
   }
 
   /// Attach a [TransitionDefinition] to allow to transition from this
-  /// this [StateNode] to a given [StateNode] for a specific [Event].
+  /// this [StateNode] to a given [StateNode] for a specific [AutomataEvent].
   @override
-  void on<E extends Event, TargetState extends State>({
+  void on<E extends AutomataEvent, TargetState extends AutomataState>({
     TransitionType? type,
     GuardCondition<E>? condition,
     List<Action<E>>? actions,
@@ -160,10 +165,10 @@ class StateNodeDefinition<S extends State> implements StateNode {
   }
 
   /// Attach a Eventless [TransitionDefinition] to allow to transition from this
-  /// [StateNode] to a given [StateNode] for any [Event] as long as the
+  /// [StateNode] to a given [StateNode] for any [AutomataEvent] as long as the
   /// conditions are met.
   @override
-  void always<TargetState extends State>({
+  void always<TargetState extends AutomataState>({
     GuardCondition<NullEvent>? condition,
     List<Action<NullEvent>>? actions,
   }) {
@@ -201,21 +206,25 @@ class StateNodeDefinition<S extends State> implements StateNode {
   ///  2. a onDone can only be placed on a parallel state which every child
   ///  has a descendant final node.
   @override
-  void onDone<E extends Event>({required List<Action<E>> actions}) {
+  void onDone<E extends AutomataEvent>({required List<Action<E>> actions}) {
     _onDone = OnDone<E>(actions: actions);
   }
 
   /// Invoke this node's [OnEntryAction].
-  void callEntryAction<E extends Event>(E event) {
+  void callEntryAction<E extends AutomataEvent>(
+      StateMachineValue value, E event) {
     _onEntryAction?.call(event);
+    if (_invoke != null) {
+      _invoke?.execute(value, event);
+    }
   }
 
   /// Invoke this node's [OnExitAction].
-  void callExitAction<E extends Event>(E event) {
+  void callExitAction<E extends AutomataEvent>(E event) {
     _onExitAction?.call(event);
   }
 
-  void callDoneActions<E extends Event>(E event) {
+  void callDoneActions<E extends AutomataEvent>(E event) {
     final actions = _onDone?.actions ?? [];
     for (final action in actions) {
       action.call(event);
@@ -246,7 +255,7 @@ class StateNodeDefinition<S extends State> implements StateNode {
   ///
   /// See also:
   ///  - [SCXML: Selecting Transitions](https://www.w3.org/TR/scxml/#SelectingTransitions)
-  List<TransitionDefinition> getTransitions<E extends Event>(E event) {
+  List<TransitionDefinition> getTransitions<E extends AutomataEvent>(E event) {
     final transitions = <TransitionDefinition>[];
 
     for (final node in [this, ...path.reversed]) {
@@ -270,6 +279,14 @@ class StateNodeDefinition<S extends State> implements StateNode {
     }
 
     return transitions;
+  }
+
+  /// Attach a [InvokeDefinition] to this node.
+  @override
+  void invoke<Result>({InvokeBuilder? builder}) {
+    _invoke = InvokeDefinition<S, AutomataEvent, Result>(sourceStateNode: this);
+
+    builder?.call(_invoke!);
   }
 
   @override
