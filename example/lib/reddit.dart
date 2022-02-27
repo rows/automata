@@ -19,6 +19,45 @@ Future<List<_RedditEntry>> _fetchReddit() async {
   }).toList();
 }
 
+class StateMachineNotifier extends ChangeNotifier {
+  var value = <_RedditEntry>[];
+
+  late final _machine = StateMachine.create(
+      (g) => g
+        ..initial<_Idle>()
+        ..state<_Idle>(
+          builder: (b) => b..on<_OnFetch, _Loading>(),
+        )
+        ..state<_Loading>(
+          builder: (b) => b
+            ..invoke<List<_RedditEntry>>(
+              builder: (b) => b
+                ..id('fetchTopics')
+                ..src((_) => _fetchReddit())
+                ..onDone<_Success, List<_RedditEntry>>(
+                  actions: [
+                    (event) {
+                      value = event.data;
+                      notifyListeners();
+                    }
+                  ],
+                )
+                ..onError<_Failure>(
+                  actions: [(event) {}],
+                ),
+            ),
+        )
+        ..state<_Success>(type: StateNodeType.terminal)
+        ..state<_Failure>(
+          builder: (b) => b..on<_OnRetry, _Loading>(),
+        ),
+      onTransition: ((e, value) => notifyListeners()));
+
+  void send<E extends AutomataEvent>(E event) => _machine.send(event);
+
+  bool isInState<S>() => _machine.isInState<S>();
+}
+
 class RedditExample extends StatefulWidget {
   const RedditExample({Key? key}) : super(key: key);
 
@@ -27,50 +66,7 @@ class RedditExample extends StatefulWidget {
 }
 
 class _RedditExampleState extends State<RedditExample> {
-  var _results = <_RedditEntry>[];
-
-  late final _machine = StateMachine.create(
-    (g) => g
-      ..initial<_Idle>()
-      ..state<_Idle>(
-        builder: (b) => b..on<_OnFetch, _Loading>(),
-      )
-      ..state<_Loading>(
-        builder: (b) => b
-          ..onEntry((event) {
-            setState(() {});
-          })
-          ..invoke<List<_RedditEntry>>(
-            builder: (b) => b
-              ..id('fetchTopics')
-              ..src((_) => _fetchReddit())
-              ..onDone<_Success, List<_RedditEntry>>(
-                actions: [
-                  (event) {
-                    setState(() => _results = event.data);
-                  }
-                ],
-              )
-              ..onError<_Failure>(
-                actions: [(event) {}],
-              ),
-          ),
-      )
-      ..state<_Success>(
-        type: StateNodeType.terminal,
-        builder: (b) => b
-          ..onEntry((event) {
-            setState(() {});
-          }),
-      )
-      ..state<_Failure>(
-        builder: (b) => b
-          ..onEntry((event) {
-            setState(() {});
-          })
-          ..on<_OnRetry, _Loading>(),
-      ),
-  );
+  late final _machine = StateMachineNotifier();
 
   @override
   void initState() {
@@ -81,22 +77,25 @@ class _RedditExampleState extends State<RedditExample> {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Builder(builder: (context) {
-        if (_machine.isInState<_Loading>() || _machine.isInState<_Idle>()) {
-          return const Text('Loading');
-        }
+      child: AnimatedBuilder(
+        animation: _machine,
+        builder: (context, _) {
+          if (_machine.isInState<_Loading>() || _machine.isInState<_Idle>()) {
+            return const Text('Loading');
+          }
 
-        if (_machine.isInState<_Failure>()) {
-          return ElevatedButton(
-            onPressed: () => _machine.send(_OnRetry()),
-            child: const Text('Retry'),
+          if (_machine.isInState<_Failure>()) {
+            return ElevatedButton(
+              onPressed: () => _machine.send(_OnRetry()),
+              child: const Text('Retry'),
+            );
+          }
+
+          return ListView(
+            children: _machine.value.map((e) => Text(e.title)).toList(),
           );
-        }
-
-        return ListView(
-          children: _results.map((e) => Text(e.title)).toList(),
-        );
-      }),
+        },
+      ),
     );
   }
 }
