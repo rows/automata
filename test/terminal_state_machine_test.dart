@@ -103,7 +103,7 @@ StateMachine _createMachine(_StateMachineActions actions) {
                 type: StateNodeType.terminal,
               )
               ..onDone(
-                actions: [(_) => actions.stopCrosswalk1()],
+                actions: [(context, event) => actions.stopCrosswalk1()],
               ),
           )
           ..state<_Crosswalk2>(
@@ -122,17 +122,17 @@ StateMachine _createMachine(_StateMachineActions actions) {
                 type: StateNodeType.terminal,
               )
               ..onDone(
-                actions: [(_) => actions.stopCrosswalk2()],
+                actions: [(context, event) => actions.stopCrosswalk2()],
               ),
           )
           ..onDone(
-            actions: [(_) => actions.prepareGreenLight()],
+            actions: [(context, event) => actions.prepareGreenLight()],
           ),
       )
       // this action should never occur because final states are not direct
       // children of machine
       ..onDone(
-        actions: [(_) => actions.shouldNeverOccur()],
+        actions: [(context, event) => actions.shouldNeverOccur()],
       ),
   );
 }

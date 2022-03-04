@@ -129,14 +129,14 @@ Future<StateMachine> _createMachine<S extends AutomataState>(
       ..state<Alive>(
         builder: (b) => b
           ..initial<Young>()
-          ..onEntry((e) => watcher.onEntry(Alive, e))
-          ..onExit((e) => watcher.onExit(Alive, e))
+          ..onEntry((context, e) => watcher.onEntry(Alive, e))
+          ..onExit((context, e) => watcher.onExit(Alive, e))
 
           // Transitions
           ..on<OnBirthday, Young>(
             condition: (e) => human.age < 18,
             actions: [
-              (e) async {
+              (context, e) {
                 human.age++;
                 // print('Young $human');
               },
@@ -145,7 +145,7 @@ Future<StateMachine> _createMachine<S extends AutomataState>(
           ..on<OnBirthday, MiddleAged>(
             condition: (e) => human.age < 50,
             actions: [
-              (e) async {
+              (context, e) {
                 human.age++;
                 // print('MiddleAged $human');
               },
@@ -154,7 +154,7 @@ Future<StateMachine> _createMachine<S extends AutomataState>(
           ..on<OnBirthday, Old>(
             condition: (e) => human.age < 80,
             actions: [
-              (e) async {
+              (context, e) {
                 human.age++;
                 // print('Old $human');
               },
@@ -164,20 +164,23 @@ Future<StateMachine> _createMachine<S extends AutomataState>(
 
           // States
           ..state<Young>(
-            builder: (b) => b..onExit((e) => watcher.onExit(Young, e)),
+            builder: (b) => b..onExit((context, e) => watcher.onExit(Young, e)),
           )
           ..state<MiddleAged>(
-            builder: (b) => b..onEntry((e) => watcher.onEntry(MiddleAged, e)),
+            builder: (b) => b
+              ..onEntry(
+                (context, e) => watcher.onEntry(MiddleAged, e),
+              ),
           )
           ..state<Old>(),
       )
       ..state<Dead>(
         builder: (b) => b
           ..initial<Purgatory>()
-          ..onEntry((e) => watcher.onEntry(Dead, e))
+          ..onEntry((context, e) => watcher.onEntry(Dead, e))
           ..state<Purgatory>(
             builder: (b) => b
-              ..onEntry((e) => watcher.onEntry(Purgatory, e))
+              ..onEntry((context, e) => watcher.onEntry(Purgatory, e))
               ..on<OnJudged, Good>(
                 condition: (e) => e.judgement == Judgement.good,
               )

@@ -82,8 +82,8 @@ StateMachine _createMachine<S extends AutomataState>(Scoreboard scoreboard) {
           ..always<Lose>(condition: (_) => scoreboard.points < 0)
           ..on<OnAwardPoints, Playing>(
             actions: [
-              (OnAwardPoints e) {
-                scoreboard.points += e.points;
+              (event, _) {
+                scoreboard.points += event.points;
               },
             ],
           ),

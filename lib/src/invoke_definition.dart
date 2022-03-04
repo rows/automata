@@ -14,7 +14,7 @@ class InvokeDefinition<S extends AutomataState, E extends AutomataEvent,
   late final String _id;
 
   /// Source node to which this invoke is attached to.
-  final StateNodeDefinition sourceStateNode;
+  final StateNodeDefinition<S> sourceStateNode;
 
   /// Success transition.
   late final TransitionDefinition _onDoneTransition;
@@ -62,16 +62,22 @@ class InvokeDefinition<S extends AutomataState, E extends AutomataEvent,
 
   /// Execute the async callback and trigger the onDone or onError
   /// [TransitionDefinition].
-  void execute(StateMachineValue value, AutomataEvent e) async {
+  void execute(
+    AutomataContextState? context,
+    StateMachineValue value,
+    AutomataEvent e,
+  ) async {
     try {
       final result = await _callback(e);
 
       _onDoneTransition.trigger(
+        context,
         value,
         DoneInvokeEvent<Result>(id: _id, data: result),
       );
     } on Object catch (e) {
       _onErrorTransition.trigger(
+        context,
         value,
         PlatformErrorEvent(exception: e),
       );

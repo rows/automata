@@ -233,7 +233,7 @@ StateMachine _createMachine(Watcher watcher) {
           ..state<Autocomplete>(
             builder: (b) => b
               ..initial<AutocompleteUnavailable>()
-              ..onExit((event) => watcher.onExit(Autocomplete, event))
+              ..onExit((context, event) => watcher.onExit(Autocomplete, event))
 
               // Autocomplete events
               ..on<OnCaretPositionChange, AutocompleteList>(
@@ -250,7 +250,10 @@ StateMachine _createMachine(Watcher watcher) {
                   ..on<OnResetInteraction, AutocompleteUnavailable>()
                   ..always<AutocompleteList>(
                     actions: [
-                      (event) => watcher.onAlways(AutocompleteList, event),
+                      (event, _) => watcher.onAlways(
+                            AutocompleteList,
+                            event,
+                          ),
                     ],
                   ),
               )
@@ -259,14 +262,20 @@ StateMachine _createMachine(Watcher watcher) {
                   ..on<OnResetInteraction, AutocompleteUnavailable>()
                   ..always<AutocompleteDetails>(
                     actions: [
-                      (event) => watcher.onAlways(AutocompleteDetails, event),
+                      (event, _) => watcher.onAlways(
+                            AutocompleteDetails,
+                            event,
+                          ),
                     ],
                   ),
               )
               ..state<AutocompleteUnavailable>(
                 builder: (b) => b
                   ..onEntry(
-                    (event) => watcher.onEntry(AutocompleteUnavailable, event),
+                    (context, event) => watcher.onEntry(
+                      AutocompleteUnavailable,
+                      event,
+                    ),
                   ),
               ),
           )

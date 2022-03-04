@@ -94,8 +94,8 @@ abstract class StateNode<S extends AutomataState> {
 
   /// Attach a [TransitionDefinition] to allow to transition from this
   /// this [StateNode] to a given [StateNode] for a specific [AutomataEvent].
-  void on<E extends AutomataEvent, Target extends AutomataState>({
-    TransitionType type,
+  void on<E extends AutomataEvent, TargetState extends AutomataState>({
+    TransitionType? type,
     GuardCondition<E>? condition,
     List<Action<E>>? actions,
   });
@@ -117,7 +117,9 @@ abstract class StateNode<S extends AutomataState> {
   /// Sets callback that will bne called when:
   /// - for a [StateNodeType.compound] - a child final substate is activated.
   /// - for a [StateNodeType.parallel] - all sub-states are in final states.
-  void onDone<E extends AutomataEvent>({required List<Action<E>> actions});
+  void onDone<E extends AutomataEvent>({
+    required List<Action<E>> actions,
+  });
 
   void invoke<Result>({InvokeBuilder? builder});
 }
@@ -126,20 +128,35 @@ abstract class StateNode<S extends AutomataState> {
 typedef GuardCondition<E extends AutomataEvent> = bool Function(E event);
 
 /// A function called when a transition is applied.
-typedef Action<E extends AutomataEvent> = void Function(E event);
+typedef Action<E extends AutomataEvent> = void Function(
+  E event,
+  Assign assign,
+);
+
+typedef Assign = AutomataContextState Function(AutomataContextState context);
 
 /// A function called when a [AutomataState] is entered.
-typedef OnEntryAction = void Function(AutomataEvent? event);
+typedef OnEntryAction = void Function(
+  AutomataContextState? context,
+  AutomataEvent? event,
+);
 
 /// A function called when a [AutomataState] is left.
-typedef OnExitAction = void Function(AutomataEvent? event);
+typedef OnExitAction = void Function(
+  AutomataContextState? context,
+  AutomataEvent? event,
+);
 
 /// A function called on every transition.
 typedef OnTransitionCallback = void Function(
-    AutomataEvent e, StateMachineValue value);
+  AutomataEvent e,
+  StateMachineValue value,
+);
 
 /// A function used to compose [StateNode]s into our state machine.
-typedef StateBuilder<S extends AutomataState> = void Function(StateNode<S>);
+typedef StateBuilder<S extends AutomataState> = void Function(
+  StateNode<S>,
+);
 
 /// A function used to compose a [InvokeDefinition].
 typedef InvokeBuilder = void Function(InvokeDefinition);
@@ -189,4 +206,8 @@ abstract class ErrorEvent extends AutomataEvent {
 class PlatformErrorEvent extends ErrorEvent {
   const PlatformErrorEvent({required Object exception})
       : super(exception: exception);
+}
+
+abstract class AutomataContextState {
+  const AutomataContextState();
 }

@@ -9,7 +9,10 @@ class _MockSrcCallbackFunction extends Mock {
 }
 
 class _MockOnDoneCallbackFunction extends Mock {
-  AutomataContextState? call(DoneInvokeEvent<_TestMockResult> e, Assign assign);
+  AutomataContextState? call(
+    DoneInvokeEvent<_TestMockResult> e,
+    Assign assign,
+  );
 }
 
 class _MockOnErrorCallbackFunction extends Mock {
@@ -77,10 +80,7 @@ void main() {
     expect(machine.isInState<_Failure>(), isTrue);
 
     verify(
-      () => onErrorCallback(
-        PlatformErrorEvent(exception: exception),
-        any(),
-      ),
+      () => onErrorCallback(PlatformErrorEvent(exception: exception), any()),
     ).called(1);
   });
 
@@ -105,10 +105,7 @@ void main() {
     await Future.delayed(const Duration(milliseconds: 50));
     expect(machine.isInState<_Failure>(), isTrue);
     verify(
-      () => onErrorCallback(
-        PlatformErrorEvent(exception: exception),
-        any(),
-      ),
+      () => onErrorCallback(PlatformErrorEvent(exception: exception), any()),
     ).called(1);
 
     const result = _TestMockResult(value: 'Something');
@@ -172,5 +169,6 @@ StateMachine _createMachine<S extends AutomataState>({
       ..state<_Failure>(
         builder: (b) => b..on<_OnRetry, _Loading>(),
       ),
+    context: const _TestMockResult(value: 'initial'),
   );
 }

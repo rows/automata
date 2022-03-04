@@ -74,8 +74,8 @@ class TransitionDefinition<S extends AutomataState, E extends AutomataEvent,
 
   // First look for the target leaf within the compound root and only
   // afterwards fallback to search from root.
-  late final StateNodeDefinition targetStateNode = (() {
-    StateNodeDefinition? targetLeaf;
+  late final StateNodeDefinition<AutomataState> targetStateNode = (() {
+    StateNodeDefinition<AutomataState>? targetLeaf;
     if (sourceStateNode.parentNode?.stateNodeType == StateNodeType.compound) {
       targetLeaf = _findLeaf(targetState, sourceStateNode.parentNode!);
     }
@@ -99,7 +99,10 @@ class TransitionDefinition<S extends AutomataState, E extends AutomataEvent,
 
   /// Given a [Type] and a [StateNodeDefinition] recursively find the node
   /// that contains that [Type].
-  StateNodeDefinition? _findLeaf(Type state, StateNodeDefinition node) {
+  StateNodeDefinition<AutomataState>? _findLeaf(
+    Type state,
+    StateNodeDefinition<AutomataState> node,
+  ) {
     final currentNode = node;
     for (final key in currentNode.childNodes.keys) {
       final childNode = currentNode.childNodes[key];
@@ -178,7 +181,11 @@ class TransitionDefinition<S extends AutomataState, E extends AutomataEvent,
   }
 
   /// Trigger this transition for the given event.
-  StateMachineValue trigger(StateMachineValue value, E e) {
+  StateMachineValue trigger(
+    AutomataContextState? context,
+    StateMachineValue value,
+    E e,
+  ) {
     var sourceLeaf = sourceStateNode;
     final targetLeaf = targetStateNode;
 
@@ -196,13 +203,13 @@ class TransitionDefinition<S extends AutomataState, E extends AutomataEvent,
 
     // trigger all on exits
     for (final node in exitNodes) {
-      node.callExitAction(e);
+      node.callExitAction(context, e);
     }
 
     // trigger all actions
     if (actions != null && actions!.isNotEmpty) {
       for (final action in actions!) {
-        action(e);
+        action(e, (context) => context);
       }
     }
 
@@ -212,7 +219,7 @@ class TransitionDefinition<S extends AutomataState, E extends AutomataEvent,
 
     // trigger all on entrys based on common ancestor
     for (final node in entryNodes) {
-      node.callEntryAction(value, e);
+      node.callEntryAction(context, value, e);
     }
 
     // Call onDone for all parent node in which children have reached a
@@ -227,7 +234,7 @@ class TransitionDefinition<S extends AutomataState, E extends AutomataEvent,
       // on the parent.
       if (parentNode.stateNodeType == StateNodeType.compound ||
           parentNode == node.rootNode) {
-        parentNode.callDoneActions(e);
+        parentNode.callDoneActions(context, e);
       }
 
       if (parentNode.stateNodeType != StateNodeType.compound) {
@@ -248,7 +255,7 @@ class TransitionDefinition<S extends AutomataState, E extends AutomataEvent,
         }
 
         if (allParallelNodesInFinalState) {
-          parallelParentMachine?.callDoneActions(e);
+          parallelParentMachine?.callDoneActions(context, e);
         }
       }
     }

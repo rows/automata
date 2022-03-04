@@ -39,17 +39,15 @@ void main() {
         ..state<Solid>(
           builder: (b) => b
             ..on<OnMelted, Liquid>()
-            ..onEntry((event) => calls.add('onEntrySolid'))
-            ..onExit((event) {
-              calls.add('onExitSolid');
-            }),
+            ..onEntry((context, event) => calls.add('onEntrySolid'))
+            ..onExit((context, event) => calls.add('onExitSolid')),
         )
         ..state<Liquid>(
           builder: (b) => b
             ..on<OnFroze, Solid>()
             ..on<OnVaporized, Gas>()
-            ..onEntry((event) => calls.add('onEntryLiquid'))
-            ..onExit((event) => calls.add('onExitLiquid')),
+            ..onEntry((context, event) => calls.add('onEntryLiquid'))
+            ..onExit((context, event) => calls.add('onExitLiquid')),
         )
         ..state<Gas>(
           builder: (b) => b..on<OnCondensed, Liquid>(),
@@ -118,8 +116,8 @@ void main() {
           builder: (b) => b
             ..on<OnMelted, Liquid>(
               actions: [
-                (e) => effects.add('sideeffect_1'),
-                (e) => effects.add('sideeffect_2'),
+                (context, e) => effects.add('sideeffect_1'),
+                (context, e) => effects.add('sideeffect_2'),
               ],
             ),
         )

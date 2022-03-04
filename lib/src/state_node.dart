@@ -27,7 +27,7 @@ class StateNodeDefinition<S extends AutomataState> implements StateNode {
 
   /// Path of [StateNodeDefinition] from the rootNode up until this node.
   /// It does not include the current node.
-  late final List<StateNodeDefinition> path;
+  late final List<StateNodeDefinition<AutomataState>> path;
   late final Set<Type> fullPathStateType = (() {
     return {
       ...path.map((e) => e.stateType).toSet(),
@@ -36,10 +36,10 @@ class StateNodeDefinition<S extends AutomataState> implements StateNode {
   })();
 
   /// The parent [StateNodeDefinition].
-  StateNodeDefinition? parentNode;
+  StateNodeDefinition<AutomataState>? parentNode;
 
   /// List of [StateNodeDefinition].
-  Map<Type, StateNodeDefinition> childNodes = {};
+  Map<Type, StateNodeDefinition<AutomataState>> childNodes = {};
 
   /// Maps of [AutomataEvent]s to [TransitionDefinition] available for this
   /// [StateNodeDefinition].
@@ -73,7 +73,7 @@ class StateNodeDefinition<S extends AutomataState> implements StateNode {
   })();
 
   /// Compute the initialStateValue.
-  late final List<StateNodeDefinition> initialStateNodes = (() {
+  late final List<StateNodeDefinition<AutomataState>> initialStateNodes = (() {
     // Reference:
     //  "when the state machine enters the parent <parallel> state, it also
     //  enters each child state"
@@ -89,7 +89,7 @@ class StateNodeDefinition<S extends AutomataState> implements StateNode {
     //  "If neither the <initial> child or the 'initial' element is specified,
     //  the default initial state is the first child state in document order."
     if (stateNodeType == StateNodeType.compound) {
-      late StateNodeDefinition node;
+      late StateNodeDefinition<AutomataState> node;
       if (_initialState != null) {
         final initial = _initialState;
 
@@ -107,7 +107,7 @@ class StateNodeDefinition<S extends AutomataState> implements StateNode {
     }
 
     // If atomic or terminal there is no initial node.
-    return <StateNodeDefinition>[];
+    return <StateNodeDefinition<AutomataState>>[];
   })();
 
   StateNodeDefinition({
@@ -119,7 +119,8 @@ class StateNodeDefinition<S extends AutomataState> implements StateNode {
 
   /// Getter to retrieve the root node, ie. the first node in this node's
   /// [path].
-  StateNodeDefinition get rootNode => path.isEmpty ? this : path.first;
+  StateNodeDefinition<AutomataState> get rootNode =>
+      path.isEmpty ? this : path.first;
 
   /// Defines the initial [AutomataState].
   /// Used in [StateNode] of type [StateNodeType.compound].
@@ -133,8 +134,10 @@ class StateNodeDefinition<S extends AutomataState> implements StateNode {
   /// Optionally it can define a [StateNodeType], if no specific type is
   /// provided then one its inferred.
   @override
-  void state<I extends AutomataState>(
-      {StateBuilder? builder, StateNodeType? type}) {
+  void state<I extends AutomataState>({
+    StateBuilder? builder,
+    StateNodeType? type,
+  }) {
     final newStateNode = StateNodeDefinition<I>(
       parentNode: this,
       stateNodeType: type,
@@ -148,9 +151,9 @@ class StateNodeDefinition<S extends AutomataState> implements StateNode {
   /// this [StateNode] to a given [StateNode] for a specific [AutomataEvent].
   @override
   void on<E extends AutomataEvent, TargetState extends AutomataState>({
+    List<Action<E>>? actions,
     TransitionType? type,
     GuardCondition<E>? condition,
-    List<Action<E>>? actions,
   }) {
     final onTransition = TransitionDefinition<S, E, TargetState>(
       sourceStateNode: this,
@@ -212,22 +215,31 @@ class StateNodeDefinition<S extends AutomataState> implements StateNode {
 
   /// Invoke this node's [OnEntryAction].
   void callEntryAction<E extends AutomataEvent>(
-      StateMachineValue value, E event) {
-    _onEntryAction?.call(event);
+    AutomataContextState? context,
+    StateMachineValue value,
+    E event,
+  ) {
+    _onEntryAction?.call(context, event);
     if (_invoke != null) {
-      _invoke?.execute(value, event);
+      _invoke?.execute(context, value, event);
     }
   }
 
   /// Invoke this node's [OnExitAction].
-  void callExitAction<E extends AutomataEvent>(E event) {
-    _onExitAction?.call(event);
+  void callExitAction<E extends AutomataEvent>(
+    AutomataContextState? context,
+    E event,
+  ) {
+    _onExitAction?.call(context, event);
   }
 
-  void callDoneActions<E extends AutomataEvent>(E event) {
+  void callDoneActions<E extends AutomataEvent>(
+    AutomataContextState? context,
+    E event,
+  ) {
     final actions = _onDone?.actions ?? [];
     for (final action in actions) {
-      action.call(event);
+      action.call(event, (context) => context);
     }
   }
 
@@ -284,7 +296,9 @@ class StateNodeDefinition<S extends AutomataState> implements StateNode {
   /// Attach a [InvokeDefinition] to this node.
   @override
   void invoke<Result>({InvokeBuilder? builder}) {
-    _invoke = InvokeDefinition<S, AutomataEvent, Result>(sourceStateNode: this);
+    _invoke = InvokeDefinition<S, AutomataEvent, Result>(
+      sourceStateNode: this,
+    );
 
     builder?.call(_invoke!);
   }

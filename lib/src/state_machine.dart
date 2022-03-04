@@ -11,6 +11,8 @@ import 'types.dart';
 /// to query it's current values.
 ///
 class StateMachine {
+  AutomataContextState? context;
+
   /// Hold all the currently active [StateNodeDefinition].
   late StateMachineValue value;
 
@@ -27,13 +29,13 @@ class StateMachine {
   /// [StateMachine] performs.
   OnTransitionCallback? onTransition;
 
-  StateMachine._(this.rootNode, {this.onTransition}) {
+  StateMachine._(this.rootNode, {this.onTransition, this.context}) {
     value = StateMachineValue(rootNode);
 
     // Get root's initial nodes and call entry on them with [InitialEvent]
     final entryNodes = rootNode.initialStateNodes;
     for (final node in entryNodes) {
-      node.callEntryAction(value, InitialEvent());
+      node.callEntryAction(context, value, InitialEvent());
       value.add(node);
     }
 
@@ -48,14 +50,19 @@ class StateMachine {
   }
 
   /// Creates a [StateMachine] using a builder pattern.
-  factory StateMachine.create(
+  static StateMachine create(
     void Function(StateNode) builder, {
     OnTransitionCallback? onTransition,
+    AutomataContextState? context,
   }) {
     final rootNode = StateNodeDefinition<RootState>();
     builder(rootNode);
 
-    return StateMachine._(rootNode, onTransition: onTransition);
+    return StateMachine._(
+      rootNode,
+      onTransition: onTransition,
+      context: context,
+    );
   }
 
   /// Send an event to the state machine.
@@ -81,7 +88,7 @@ class StateMachine {
     }
 
     for (final transition in transitions) {
-      value = transition.trigger(value, event);
+      value = transition.trigger(context, value, event);
       onTransition?.call(event, value);
 
       _controller.add(value);
@@ -90,6 +97,14 @@ class StateMachine {
     if (E != NullEvent) {
       send(const NullEvent());
     }
+  }
+
+  void assign(Assign callback) {
+    if (context == null) {
+      throw Exception('no context');
+    }
+
+    context = callback(context!);
   }
 
   /// Check if the state machine is currently in a given [AutomataState].

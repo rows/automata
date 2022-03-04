@@ -1,6 +1,17 @@
 import 'package:automata/automata.dart';
+import 'package:automata_flutter/automata_flutter.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+
+class _RedditContext extends AutomataContextState {
+  final List<_RedditEntry> results;
+
+  _RedditContext({required this.results});
+
+  _RedditContext copyWith({List<_RedditEntry>? results}) {
+    return _RedditContext(results: results ?? this.results);
+  }
+}
 
 class _RedditEntry {
   final String title;
@@ -19,21 +30,17 @@ Future<List<_RedditEntry>> _fetchReddit() async {
   }).toList();
 }
 
-class RedditContext extends ChangeNotifier implements AutomataContextState {
-  var _result = <_RedditEntry>[];
+class RedditExample extends StatefulWidget {
+  const RedditExample({Key? key}) : super(key: key);
 
-  set result(List<_RedditEntry> data) {
-    _result = data;
-    notifyListeners();
-  }
-
-  List<_RedditEntry> get result => _result;
+  @override
+  State<RedditExample> createState() => _RedditExampleState();
 }
 
-class StateMachineNotifier extends ChangeNotifier {
-  var value = <_RedditEntry>[];
+class _RedditExampleState extends State<RedditExample> {
+  var results = <_RedditEntry>[];
 
-  late final _machine = StateMachine.create(
+  late final _machine = StateMachineNotifier.create(
     (g) => g
       ..initial<_Idle>()
       ..state<_Idle>(
@@ -48,15 +55,18 @@ class StateMachineNotifier extends ChangeNotifier {
               ..onDone<_Success, List<_RedditEntry>>(
                 actions: [
                   (event, assign) {
-                    final ctx = context as RedditContext;
-                    ctx.result = event.data;
-                    // value = event.data;
-                    notifyListeners();
+                    assign((context) {
+                      return (context as _RedditContext)
+                          .copyWith(results: event.data);
+                    });
+                    // setState(() {
+                    //   results = event.data;
+                    // });
                   }
                 ],
               )
               ..onError<_Failure>(
-                actions: [(context, event) {}],
+                actions: [(event, _) {}],
               ),
           ),
       )
@@ -64,24 +74,8 @@ class StateMachineNotifier extends ChangeNotifier {
       ..state<_Failure>(
         builder: (b) => b..on<_OnRetry, _Loading>(),
       ),
-    context: RedditContext(),
-    onTransition: ((e, value) => notifyListeners()),
+    context: _RedditContext(results: []),
   );
-
-  void send<E extends AutomataEvent>(E event) => _machine.send(event);
-
-  bool isInState<S>() => _machine.isInState<S>();
-}
-
-class RedditExample extends StatefulWidget {
-  const RedditExample({Key? key}) : super(key: key);
-
-  @override
-  State<RedditExample> createState() => _RedditExampleState();
-}
-
-class _RedditExampleState extends State<RedditExample> {
-  late final _machine = StateMachineNotifier();
 
   @override
   void initState() {
@@ -107,7 +101,7 @@ class _RedditExampleState extends State<RedditExample> {
           }
 
           return ListView(
-            children: _machine.value.map((e) => Text(e.title)).toList(),
+            children: results.map((e) => Text(e.title)).toList(),
           );
         },
       ),

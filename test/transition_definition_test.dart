@@ -81,18 +81,18 @@ void main() {
             builder: (b) => b
               ..initial<State11>()
               ..on<OnEvent1, State11>(type: transitionType)
-              ..onEntry((event) {
+              ..onEntry((context, event) {
                 watcher.onEntry(State1, event);
               })
-              ..onExit((event) {
+              ..onExit((context, event) {
                 watcher.onExit(State1, event);
               })
               ..state<State11>(
                 builder: (b) => b
-                  ..onEntry((event) {
+                  ..onEntry((context, event) {
                     watcher.onEntry(State11, event);
                   })
-                  ..onExit((event) {
+                  ..onExit((context, event) {
                     watcher.onExit(State11, event);
                   }),
               ),
