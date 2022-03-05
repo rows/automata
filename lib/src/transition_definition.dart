@@ -255,4 +255,13 @@ class TransitionDefinition<S extends State, E extends Event,
 
     return value;
   }
+
+  Map<String, dynamic> toJSON() {
+    return {
+      'from': sourceStateNode.stateType.toString(),
+      'to': targetState.toString(),
+      'event': E.toString(),
+      'label': E.toString(),
+    };
+  }
 }

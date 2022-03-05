@@ -280,4 +280,53 @@ class StateNodeDefinition<S extends State> implements StateNode {
 
     return '${path.last} > $stateType';
   }
+
+  Map<String, dynamic> toJSON() {
+    const mapType = {
+      StateNodeType.terminal: 'final',
+      StateNodeType.atomic: 'regular',
+      StateNodeType.compound: 'regular',
+      StateNodeType.parallel: 'parallel',
+    };
+
+    var json = <String, dynamic>{
+      'name': stateType.toString(),
+      'type': mapType[stateNodeType],
+    };
+
+    if (childNodes.isNotEmpty || _eventTransitionsMap.isNotEmpty) {
+      json['statemachine'] = <String, dynamic>{
+        'states': [],
+        'transitions': [],
+      };
+    }
+
+    if (childNodes.isNotEmpty) {
+      json['statemachine']['states'] =
+          childNodes.values.map<Map<String, dynamic>>(
+        (value) {
+          final result = value.toJSON();
+
+          if (initialStateNodes.contains(value)) {
+            result['type'] = 'initial';
+          }
+
+          return result;
+        },
+      ).toList();
+    }
+
+    if (_eventTransitionsMap.isNotEmpty) {
+      json['statemachine']['transitions'] =
+          _eventTransitionsMap.values.fold<List<Map<String, dynamic>>>(
+        [],
+        (acc, transitions) {
+          acc.addAll(transitions.map((transition) => transition.toJSON()));
+          return acc;
+        },
+      ).toList();
+    }
+
+    return json;
+  }
 }

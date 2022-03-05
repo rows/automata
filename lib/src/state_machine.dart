@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'state_machine_value.dart';
 import 'state_node.dart';
@@ -104,5 +105,10 @@ class StateMachine {
   @override
   String toString() {
     return rootNode.toString();
+  }
+
+  String export() {
+    const encoder = JsonEncoder.withIndent('  ');
+    return encoder.convert(rootNode.toJSON()['statemachine']);
   }
 }
