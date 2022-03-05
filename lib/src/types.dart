@@ -55,8 +55,8 @@ class NullEvent extends AutomataEvent {
   const NullEvent();
 }
 
-/// [AutomataEvent] called when the [StateMachine] is first created to ensure the
-/// initial state is properly set.
+/// [AutomataEvent] called when the [StateMachine] is first created to ensure
+/// the initial state is properly set.
 class InitialEvent extends AutomataEvent {}
 
 /// Possible node types.
@@ -89,8 +89,10 @@ abstract class StateNode<S extends AutomataState> {
   ///
   /// Optionally it can define a [StateNodeType], if no specific type is
   /// provided then one its inferred.
-  void state<I extends AutomataState>(
-      {StateBuilder? builder, StateNodeType? type});
+  void state<I extends AutomataState>({
+    StateBuilder? builder,
+    StateNodeType? type,
+  });
 
   /// Attach a [TransitionDefinition] to allow to transition from this
   /// this [StateNode] to a given [StateNode] for a specific [AutomataEvent].
@@ -136,7 +138,9 @@ typedef OnExitAction = void Function(AutomataEvent? event);
 
 /// A function called on every transition.
 typedef OnTransitionCallback = void Function(
-    AutomataEvent e, StateMachineValue value);
+  AutomataEvent e,
+  StateMachineValue value,
+);
 
 /// A function used to compose [StateNode]s into our state machine.
 typedef StateBuilder<S extends AutomataState> = void Function(StateNode<S>);

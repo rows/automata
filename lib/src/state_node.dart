@@ -1,6 +1,6 @@
-import 'package:automata/src/invoke_definition.dart';
 import 'package:collection/collection.dart';
 
+import 'invoke_definition.dart';
 import 'state_machine_value.dart';
 import 'transition_definition.dart';
 import 'types.dart';
@@ -133,8 +133,10 @@ class StateNodeDefinition<S extends AutomataState> implements StateNode {
   /// Optionally it can define a [StateNodeType], if no specific type is
   /// provided then one its inferred.
   @override
-  void state<I extends AutomataState>(
-      {StateBuilder? builder, StateNodeType? type}) {
+  void state<I extends AutomataState>({
+    StateBuilder? builder,
+    StateNodeType? type,
+  }) {
     final newStateNode = StateNodeDefinition<I>(
       parentNode: this,
       stateNodeType: type,
@@ -212,7 +214,9 @@ class StateNodeDefinition<S extends AutomataState> implements StateNode {
 
   /// Invoke this node's [OnEntryAction].
   void callEntryAction<E extends AutomataEvent>(
-      StateMachineValue value, E event) {
+    StateMachineValue value,
+    E event,
+  ) {
     _onEntryAction?.call(event);
     if (_invoke != null) {
       _invoke?.execute(value, event);

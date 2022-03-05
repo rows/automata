@@ -16,8 +16,8 @@ void main() {
   test('should set initial state to Alive and Young', () async {
     final machine = await _createMachine<Alive>(watcher, human);
 
-    expect(machine.isInState<Alive>(), isTrue);
-    expect(machine.isInState<Young>(), isTrue);
+    expect(machine.isInState(Alive), isTrue);
+    expect(machine.isInState(Young), isTrue);
   });
 
   test(
@@ -27,8 +27,8 @@ void main() {
       final machine = await _createMachine<Alive>(watcher, human);
       machine.send(OnBirthday());
 
-      expect(machine.isInState<Alive>(), isTrue);
-      expect(machine.isInState<Young>(), isTrue);
+      expect(machine.isInState(Alive), isTrue);
+      expect(machine.isInState(Young), isTrue);
     },
   );
 
@@ -41,34 +41,34 @@ void main() {
     // Move the last send outside of the loop to ease debug.
     machine.send(OnBirthday());
 
-    expect(machine.isInState<Alive>(), isTrue);
-    expect(machine.isInState<Young>(), isFalse);
-    expect(machine.isInState<MiddleAged>(), isTrue);
+    expect(machine.isInState(Alive), isTrue);
+    expect(machine.isInState(Young), isFalse);
+    expect(machine.isInState(MiddleAged), isTrue);
   });
 
   test('Test multiple transitions', () async {
     final machine = await _createMachine<Alive>(watcher, human);
     machine.send(OnBirthday());
 
-    expect(machine.isInState<Young>(), isTrue);
+    expect(machine.isInState(Young), isTrue);
     machine.send(OnDeath());
 
-    expect(machine.isInState<Dead>(), isTrue);
-    expect(machine.isInState<Purgatory>(), isTrue);
+    expect(machine.isInState(Dead), isTrue);
+    expect(machine.isInState(Purgatory), isTrue);
   });
 
   test('should transition to child state', () async {
     final machine = await _createMachine<Alive>(watcher, human);
     machine.send(OnDeath());
 
-    expect(machine.isInState<Dead>(), isTrue);
-    expect(machine.isInState<Purgatory>(), isTrue);
-    expect(machine.isInState<Alive>(), isFalse);
+    expect(machine.isInState(Dead), isTrue);
+    expect(machine.isInState(Purgatory), isTrue);
+    expect(machine.isInState(Alive), isFalse);
     machine.send(const OnJudged(Judgement.morallyAmbiguous));
 
-    expect(machine.isInState<Matrix>(), isTrue);
-    expect(machine.isInState<Dead>(), isTrue);
-    expect(machine.isInState<Purgatory>(), isTrue);
+    expect(machine.isInState(Matrix), isTrue);
+    expect(machine.isInState(Dead), isTrue);
+    expect(machine.isInState(Purgatory), isTrue);
 
     /// We should be MiddleAged but Alive should not be a separate path.
     expect(machine.value.activeNodes.length, 1);
@@ -80,8 +80,8 @@ void main() {
     machine.send(const OnJudged(Judgement.good));
 
     /// should be in both states.
-    expect(machine.isInState<InHeaven>(), isTrue);
-    expect(machine.isInState<Dead>(), isTrue);
+    expect(machine.isInState(InHeaven), isTrue);
+    expect(machine.isInState(Dead), isTrue);
   });
 
   test('calls onExit/onEntry', () async {
@@ -97,9 +97,9 @@ void main() {
 
     verify(() => watcher.onExit(Young, onBirthday)).called(19);
     verify(() => watcher.onEntry(MiddleAged, onBirthday)).called(1);
-    expect(machine.isInState<Alive>(), isTrue);
-    expect(machine.isInState<Young>(), isFalse);
-    expect(machine.isInState<MiddleAged>(), isTrue);
+    expect(machine.isInState(Alive), isTrue);
+    expect(machine.isInState(Young), isFalse);
+    expect(machine.isInState(MiddleAged), isTrue);
   });
 
   test('should call onExit/onEntry for compound state change', () async {
@@ -113,8 +113,8 @@ void main() {
     verify(() => watcher.onEntry(Dead, onDeath)).called(1);
     verify(() => watcher.onEntry(Purgatory, onDeath)).called(1);
 
-    expect(machine.isInState<Dead>(), isTrue);
-    expect(machine.isInState<Purgatory>(), isTrue);
+    expect(machine.isInState(Dead), isTrue);
+    expect(machine.isInState(Purgatory), isTrue);
   });
 }
 

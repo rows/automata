@@ -1,7 +1,6 @@
-import 'package:automata/src/state_machine_value.dart';
-import 'package:automata/src/state_node.dart';
-import 'package:automata/src/transition_definition.dart';
-
+import 'state_machine_value.dart';
+import 'state_node.dart';
+import 'transition_definition.dart';
 import 'types.dart';
 
 /// Defines a [InvokeDefinition] attached to a [StateNodeDefinition].
@@ -23,7 +22,7 @@ class InvokeDefinition<S extends AutomataState, E extends AutomataEvent,
   late final TransitionDefinition _onErrorTransition;
 
   /// Invoke async callback.
-  late final InvokeSrcCallback _callback;
+  late final InvokeSrcCallback<Result> _callback;
 
   InvokeDefinition({required this.sourceStateNode});
 
@@ -33,7 +32,7 @@ class InvokeDefinition<S extends AutomataState, E extends AutomataEvent,
   }
 
   /// Set the [InvokeDefinition]'s src async callback.
-  void src(InvokeSrcCallback callback) {
+  void src(InvokeSrcCallback<Result> callback) {
     _callback = callback;
   }
 

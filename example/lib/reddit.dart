@@ -1,5 +1,6 @@
 import 'package:automata/automata.dart';
 import 'package:dio/dio.dart';
+import 'package:example/state_builder.dart';
 import 'package:flutter/material.dart';
 
 class _RedditEntry {
@@ -8,7 +9,11 @@ class _RedditEntry {
   const _RedditEntry({required this.title});
 }
 
-Future<List<_RedditEntry>> _fetchReddit() async {
+Future<List<_RedditEntry>> _fetchReddit({required bool shouldFail}) async {
+  if (shouldFail) {
+    throw Exception('something went wrong');
+  }
+
   var response = await Dio().get('https://www.reddit.com/r/flutter.json');
 
   final children = response.data['data']['children'] as List<Object?>;
@@ -22,40 +27,48 @@ Future<List<_RedditEntry>> _fetchReddit() async {
 class StateMachineNotifier extends ChangeNotifier {
   var value = <_RedditEntry>[];
 
-  late final _machine = StateMachine.create(
-      (g) => g
-        ..initial<_Idle>()
-        ..state<_Idle>(
-          builder: (b) => b..on<_OnFetch, _Loading>(),
-        )
-        ..state<_Loading>(
-          builder: (b) => b
-            ..invoke<List<_RedditEntry>>(
-              builder: (b) => b
-                ..id('fetchTopics')
-                ..src((_) => _fetchReddit())
-                ..onDone<_Success, List<_RedditEntry>>(
-                  actions: [
-                    (event) {
-                      value = event.data;
-                      notifyListeners();
-                    }
-                  ],
-                )
-                ..onError<_Failure>(
-                  actions: [(event) {}],
-                ),
-            ),
-        )
-        ..state<_Success>(type: StateNodeType.terminal)
-        ..state<_Failure>(
-          builder: (b) => b..on<_OnRetry, _Loading>(),
-        ),
-      onTransition: ((e, value) => notifyListeners()));
+  // For testing purposes lets make the fetch fail on first attempt.
+  var hasFetchedOnce = false;
 
-  void send<E extends AutomataEvent>(E event) => _machine.send(event);
+  late final machine = StateMachine.create(
+    (g) => g
+      ..initial<_Idle>()
+      ..state<_Idle>(
+        builder: (b) => b..on<_OnFetch, _Loading>(),
+      )
+      ..state<_Loading>(
+        builder: (b) => b
+          ..invoke<List<_RedditEntry>>(
+            builder: (b) => b
+              ..id('fetchTopics')
+              ..src((_) => _fetchReddit(shouldFail: !hasFetchedOnce))
+              ..onDone<_Success, List<_RedditEntry>>(
+                actions: [
+                  (event) {
+                    value = event.data;
+                    hasFetchedOnce = true;
+                    notifyListeners();
+                  }
+                ],
+              )
+              ..onError<_Failure>(
+                actions: [
+                  (event) {
+                    hasFetchedOnce = true;
+                    notifyListeners();
+                  }
+                ],
+              ),
+          ),
+      )
+      ..state<_Success>(type: StateNodeType.terminal)
+      ..state<_Failure>(
+        builder: (b) => b..on<_OnRetry, _Loading>(),
+      ),
+    onTransition: ((e, value) => notifyListeners()),
+  );
 
-  bool isInState<S>() => _machine.isInState<S>();
+  void send<E extends AutomataEvent>(E event) => machine.send(event);
 }
 
 class RedditExample extends StatefulWidget {
@@ -66,33 +79,42 @@ class RedditExample extends StatefulWidget {
 }
 
 class _RedditExampleState extends State<RedditExample> {
-  late final _machine = StateMachineNotifier();
+  late final _machineNotifier = StateMachineNotifier();
 
   @override
   void initState() {
     super.initState();
-    _machine.send(_OnFetch());
+    _machineNotifier.send(_OnFetch());
   }
 
   @override
   Widget build(BuildContext context) {
     return Center(
       child: AnimatedBuilder(
-        animation: _machine,
+        animation: _machineNotifier,
         builder: (context, _) {
-          if (_machine.isInState<_Loading>() || _machine.isInState<_Idle>()) {
-            return const Text('Loading');
-          }
-
-          if (_machine.isInState<_Failure>()) {
-            return ElevatedButton(
-              onPressed: () => _machine.send(_OnRetry()),
-              child: const Text('Retry'),
-            );
-          }
-
-          return ListView(
-            children: _machine.value.map((e) => Text(e.title)).toList(),
+          return AutomataStateBuilder(
+            machine: _machineNotifier.machine,
+            stateBuilders: {
+              _Failure: AutomataStateBuilderFactory((context) {
+                return ElevatedButton(
+                  onPressed: () => _machineNotifier.send(_OnRetry()),
+                  child: const Text('Retry'),
+                );
+              }),
+              _Success: AutomataStateBuilderFactory((context) {
+                return ListView(
+                  children: _machineNotifier.value
+                      .map(
+                        (e) => Text(e.title),
+                      )
+                      .toList(),
+                );
+              }),
+            },
+            defaultBuilder: ((context) {
+              return const Text('Loading');
+            }),
           );
         },
       ),

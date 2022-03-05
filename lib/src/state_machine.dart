@@ -93,8 +93,8 @@ class StateMachine {
   }
 
   /// Check if the state machine is currently in a given [AutomataState].
-  bool isInState<S>() {
-    return value.isInState<S>();
+  bool isInState(Type type) {
+    return value.isInState(type);
   }
 
   /// Check if the state machine has any value that matches the given path.

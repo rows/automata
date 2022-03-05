@@ -11,12 +11,12 @@ void main() {
       final actions = _MockStateMachineActions();
       final finalMachine = _createMachine(actions);
       finalMachine.send(_OnTimer());
-      expect(finalMachine.isInState<_Yellow>(), isTrue);
+      expect(finalMachine.isInState(_Yellow), isTrue);
 
       finalMachine.send(_OnTimer());
-      expect(finalMachine.isInState<_Red>(), isTrue);
-      expect(finalMachine.isInState<_Crosswalk1>(), isTrue);
-      expect(finalMachine.isInState<_Crosswalk2>(), isTrue);
+      expect(finalMachine.isInState(_Red), isTrue);
+      expect(finalMachine.isInState(_Crosswalk1), isTrue);
+      expect(finalMachine.isInState(_Crosswalk2), isTrue);
 
       expect(finalMachine.matchesStatePath([_Crosswalk1, _Walk]), isTrue);
       expect(finalMachine.matchesStatePath([_Crosswalk2, _Walk]), isTrue);

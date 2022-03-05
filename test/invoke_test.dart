@@ -42,10 +42,10 @@ void main() {
       onErrorCallback: onErrorCallback,
     );
     machine.send(_OnFetch());
-    expect(machine.isInState<_Loading>(), isTrue);
+    expect(machine.isInState(_Loading), isTrue);
 
-    await Future.delayed(const Duration(milliseconds: 50));
-    expect(machine.isInState<_Success>(), isTrue);
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+    expect(machine.isInState(_Success), isTrue);
 
     verify(
       () =>
@@ -69,10 +69,10 @@ void main() {
       onErrorCallback: onErrorCallback,
     );
     machine.send(_OnFetch());
-    expect(machine.isInState<_Loading>(), isTrue);
+    expect(machine.isInState(_Loading), isTrue);
 
-    await Future.delayed(const Duration(milliseconds: 50));
-    expect(machine.isInState<_Failure>(), isTrue);
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+    expect(machine.isInState(_Failure), isTrue);
 
     verify(
       () => onErrorCallback(PlatformErrorEvent(exception: exception)),
@@ -95,10 +95,10 @@ void main() {
       onErrorCallback: onErrorCallback,
     );
     machine.send(_OnFetch());
-    expect(machine.isInState<_Loading>(), isTrue);
+    expect(machine.isInState(_Loading), isTrue);
 
-    await Future.delayed(const Duration(milliseconds: 50));
-    expect(machine.isInState<_Failure>(), isTrue);
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+    expect(machine.isInState(_Failure), isTrue);
     verify(
       () => onErrorCallback(PlatformErrorEvent(exception: exception)),
     ).called(1);
@@ -107,10 +107,10 @@ void main() {
     when(() => invokeSrcCallback(any())).thenAnswer((_) async => result);
 
     machine.send(_OnRetry());
-    expect(machine.isInState<_Loading>(), isTrue);
+    expect(machine.isInState(_Loading), isTrue);
 
-    await Future.delayed(const Duration(milliseconds: 50));
-    expect(machine.isInState<_Success>(), isTrue);
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+    expect(machine.isInState(_Success), isTrue);
 
     verify(
       () => onDoneCallback(
