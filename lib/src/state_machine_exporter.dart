@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:automata/automata.dart';
-import 'package:automata/src/state_node.dart';
-import 'package:automata/src/transition_definition.dart';
+import '../automata.dart';
+import 'state_node.dart';
+import 'transition_definition.dart';
 
 const _kHardcodedConditionFunctionName = 'canTransition';
 
@@ -29,7 +29,7 @@ Future<String> exportToXStateViz(
 import { createMachine } from "xstate";
 
 const machine = createMachine(
-  ${encoder.convert(machine.rootNode.toJSON(machine.id))}, 
+  ${encoder.convert(machine.rootNode.toJSON(machine.id))},
   {
     guards: {
       $_kHardcodedConditionFunctionName: () => true,
@@ -54,10 +54,11 @@ const machine = createMachine(
 /// condition function which can be later on tweaked by the user.
 extension on TransitionDefinition {
   Map<String, dynamic> toJSON() {
-    var json = <String, dynamic>{
+    final json = <String, dynamic>{
       'target': '#${targetStateNode.fullPathStateType.toString()}',
     };
 
+    // ignore: avoid_dynamic_calls
     final dynamic condition = (this as dynamic).condition;
     if (condition != null) {
       json['cond'] = _kHardcodedConditionFunctionName;
@@ -75,7 +76,7 @@ extension on StateNodeDefinition {
     final id =
         stateType == RootState ? machineId : fullPathStateType.toString();
 
-    var json = <String, dynamic>{
+    final json = <String, dynamic>{
       'id': id,
       'type': _kNodeTypeToString[stateNodeType],
     };
@@ -95,10 +96,10 @@ extension on StateNodeDefinition {
     }
 
     if (eventTransitionsMap.isNotEmpty) {
-      var on = {};
-      var always = [];
-      for (var transitions in eventTransitionsMap.values) {
-        for (var transition in transitions) {
+      final on = <String, dynamic>{};
+      final always = <Map<String, dynamic>>[];
+      for (final transitions in eventTransitionsMap.values) {
+        for (final transition in transitions) {
           if (transition.event == NullEvent) {
             always.add(transition.toJSON());
           } else {
