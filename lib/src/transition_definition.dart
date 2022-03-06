@@ -72,6 +72,7 @@ class TransitionDefinition<S extends State, E extends Event,
   /// List of side effect functions to be called on successful transition.
   final List<Action<E>>? actions;
 
+  /// Exposes the [Event] that triggers this transition.
   Type get event => E;
 
   // First look for the target leaf within the compound root and only
