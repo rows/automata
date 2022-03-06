@@ -72,6 +72,8 @@ class TransitionDefinition<S extends State, E extends Event,
   /// List of side effect functions to be called on successful transition.
   final List<Action<E>>? actions;
 
+  Type get event => E;
+
   // First look for the target leaf within the compound root and only
   // afterwards fallback to search from root.
   late final StateNodeDefinition targetStateNode = (() {
@@ -254,14 +256,5 @@ class TransitionDefinition<S extends State, E extends Event,
     }
 
     return value;
-  }
-
-  Map<String, dynamic> toJSON() {
-    return {
-      'from': sourceStateNode.stateType.toString(),
-      'to': targetState.toString(),
-      'event': E.toString(),
-      'label': E.toString(),
-    };
   }
 }

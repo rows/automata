@@ -1,4 +1,5 @@
 import 'package:collection/collection.dart';
+import 'package:meta/meta.dart';
 
 import 'transition_definition.dart';
 import 'types.dart';
@@ -41,7 +42,8 @@ class StateNodeDefinition<S extends State> implements StateNode {
 
   /// Maps of [Event]s to [TransitionDefinition] available for this
   /// [StateNodeDefinition].
-  final Map<Type, List<TransitionDefinition>> _eventTransitionsMap = {};
+  @internal
+  final Map<Type, List<TransitionDefinition>> eventTransitionsMap = {};
 
   /// Action invoked on entry this [StateNodeDefinition].
   OnEntryAction? _onEntryAction;
@@ -155,8 +157,8 @@ class StateNodeDefinition<S extends State> implements StateNode {
       type: type,
     );
 
-    _eventTransitionsMap[E] ??= <TransitionDefinition>[];
-    _eventTransitionsMap[E]!.add(onTransition);
+    eventTransitionsMap[E] ??= <TransitionDefinition>[];
+    eventTransitionsMap[E]!.add(onTransition);
   }
 
   /// Attach a Eventless [TransitionDefinition] to allow to transition from this
@@ -174,8 +176,8 @@ class StateNodeDefinition<S extends State> implements StateNode {
       actions: actions,
     );
 
-    _eventTransitionsMap[NullEvent] = _eventTransitionsMap[NullEvent] ?? [];
-    _eventTransitionsMap[NullEvent]!.add(onTransition);
+    eventTransitionsMap[NullEvent] = eventTransitionsMap[NullEvent] ?? [];
+    eventTransitionsMap[NullEvent]!.add(onTransition);
   }
 
   /// Sets callback that will be called right after machine entrys this State.
@@ -228,7 +230,7 @@ class StateNodeDefinition<S extends State> implements StateNode {
       return [];
     }
 
-    return _eventTransitionsMap[E] ?? [];
+    return eventTransitionsMap[E] ?? [];
   }
 
   /// Return all the [TransitionDefinition] for the given node and it's parents.
@@ -279,54 +281,5 @@ class StateNodeDefinition<S extends State> implements StateNode {
     }
 
     return '${path.last} > $stateType';
-  }
-
-  Map<String, dynamic> toJSON() {
-    const mapType = {
-      StateNodeType.terminal: 'final',
-      StateNodeType.atomic: 'regular',
-      StateNodeType.compound: 'regular',
-      StateNodeType.parallel: 'parallel',
-    };
-
-    var json = <String, dynamic>{
-      'name': stateType.toString(),
-      'type': mapType[stateNodeType],
-    };
-
-    if (childNodes.isNotEmpty || _eventTransitionsMap.isNotEmpty) {
-      json['statemachine'] = <String, dynamic>{
-        'states': [],
-        'transitions': [],
-      };
-    }
-
-    if (childNodes.isNotEmpty) {
-      json['statemachine']['states'] =
-          childNodes.values.map<Map<String, dynamic>>(
-        (value) {
-          final result = value.toJSON();
-
-          if (initialStateNodes.contains(value)) {
-            result['type'] = 'initial';
-          }
-
-          return result;
-        },
-      ).toList();
-    }
-
-    if (_eventTransitionsMap.isNotEmpty) {
-      json['statemachine']['transitions'] =
-          _eventTransitionsMap.values.fold<List<Map<String, dynamic>>>(
-        [],
-        (acc, transitions) {
-          acc.addAll(transitions.map((transition) => transition.toJSON()));
-          return acc;
-        },
-      ).toList();
-    }
-
-    return json;
   }
 }
