@@ -63,9 +63,3 @@ machine.send(OnMelted());
 
 ## Credits
 While developing this packages we were heavily inspired by [Tinder's StateMachine](https://github.com/Tinder/StateMachine), [Stately's XState](https://github.com/statelyai/xstate) and the [SCXML specification](https://www.w3.org/TR/scxml).
-
-## To do:
-- Create docs on Wiki
-- Create validations for invalid statemachines (eg. parallel state machine with a single substate)
-- Final states should raise a internal event OnDone and the user should be able to provide a onDoneCallback to listen for this.
-  - check xstate: https://xstate.js.org/docs/guides/final.html#api
