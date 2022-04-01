@@ -43,6 +43,7 @@ class StateNodeDefinition<S extends State> implements StateNode {
 
   /// Maps of [Event]s to [TransitionDefinition] available for this
   /// [StateNodeDefinition].
+  @internal
   final Map<Type, List<TransitionDefinition>> eventTransitionsMap = {};
 
   /// Action invoked on entry this [StateNodeDefinition].
@@ -51,6 +52,8 @@ class StateNodeDefinition<S extends State> implements StateNode {
   /// Action invoked on exit this [StateNodeDefinition].
   OnExitAction? _onExitAction;
 
+  /// Callback called when a child node of [StateNodeType.terminal] is
+  /// entered.
   @internal
   OnDone? onDoneCallback;
 
