@@ -97,6 +97,8 @@ class StateMachine {
     return value.isInState<S>();
   }
 
+  /// Check if the state machine contains a value that partially matches
+  /// the given [path].
   bool matchesStatePath(List<Type> path) {
     return value.matchesStatePath(path);
   }

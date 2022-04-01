@@ -1,5 +1,7 @@
 import 'package:collection/collection.dart';
+import 'package:meta/meta.dart';
 
+import 'exceptions.dart';
 import 'transition_definition.dart';
 import 'types.dart';
 
@@ -41,7 +43,7 @@ class StateNodeDefinition<S extends State> implements StateNode {
 
   /// Maps of [Event]s to [TransitionDefinition] available for this
   /// [StateNodeDefinition].
-  final Map<Type, List<TransitionDefinition>> _eventTransitionsMap = {};
+  final Map<Type, List<TransitionDefinition>> eventTransitionsMap = {};
 
   /// Action invoked on entry this [StateNodeDefinition].
   OnEntryAction? _onEntryAction;
@@ -49,7 +51,8 @@ class StateNodeDefinition<S extends State> implements StateNode {
   /// Action invoked on exit this [StateNodeDefinition].
   OnExitAction? _onExitAction;
 
-  OnDone? _onDone;
+  @internal
+  OnDone? onDoneCallback;
 
   /// User defined [StateNodeType].
   final StateNodeType? _stateNodeType;
@@ -86,11 +89,14 @@ class StateNodeDefinition<S extends State> implements StateNode {
     //  the default initial state is the first child state in document order."
     if (stateNodeType == StateNodeType.compound) {
       late StateNodeDefinition node;
-      if (_initialState != null) {
-        final initial = _initialState;
 
+      final initial = _initialState;
+      if (initial != null) {
         if (!childNodes.containsKey(initial)) {
-          throw Exception('Initial state "$initial" not found on "$stateType"');
+          throw UnreachableInitialStateException(
+            initialState: initial,
+            currentState: stateType,
+          );
         }
         node = childNodes[initial]!;
       } else {
@@ -129,13 +135,16 @@ class StateNodeDefinition<S extends State> implements StateNode {
   /// Optionally it can define a [StateNodeType], if no specific type is
   /// provided then one its inferred.
   @override
-  void state<I extends State>({StateBuilder? builder, StateNodeType? type}) {
-    final newStateNode = StateNodeDefinition<I>(
+  void state<NewStateType extends State>({
+    StateBuilder? builder,
+    StateNodeType? type,
+  }) {
+    final newStateNode = StateNodeDefinition<NewStateType>(
       parentNode: this,
       stateNodeType: type,
     );
 
-    childNodes[I] = newStateNode;
+    childNodes[NewStateType] = newStateNode;
     builder?.call(newStateNode);
   }
 
@@ -155,8 +164,8 @@ class StateNodeDefinition<S extends State> implements StateNode {
       type: type,
     );
 
-    _eventTransitionsMap[E] ??= <TransitionDefinition>[];
-    _eventTransitionsMap[E]!.add(onTransition);
+    eventTransitionsMap[E] ??= <TransitionDefinition>[];
+    eventTransitionsMap[E]!.add(onTransition);
   }
 
   /// Attach a Eventless [TransitionDefinition] to allow to transition from this
@@ -174,8 +183,8 @@ class StateNodeDefinition<S extends State> implements StateNode {
       actions: actions,
     );
 
-    _eventTransitionsMap[NullEvent] = _eventTransitionsMap[NullEvent] ?? [];
-    _eventTransitionsMap[NullEvent]!.add(onTransition);
+    eventTransitionsMap[NullEvent] ??= <TransitionDefinition>[];
+    eventTransitionsMap[NullEvent]!.add(onTransition);
   }
 
   /// Sets callback that will be called right after machine entrys this State.
@@ -193,16 +202,9 @@ class StateNodeDefinition<S extends State> implements StateNode {
   /// Sets callback that will bne called when:
   /// - for a [StateNodeType.compound] - a child final substate is activated.
   /// - for a [StateNodeType.parallel] - all sub-states are in final states.
-  ///
-  /// TODO:
-  ///  when we have validations:
-  ///  1. a onDone can only be placed on a compound state wich has a descendant
-  ///  final node.
-  ///  2. a onDone can only be placed on a parallel state which every child
-  ///  has a descendant final node.
   @override
   void onDone<E extends Event>({required List<Action<E>> actions}) {
-    _onDone = OnDone<E>(actions: actions);
+    onDoneCallback = OnDone<E>(actions: actions);
   }
 
   /// Invoke this node's [OnEntryAction].
@@ -216,7 +218,7 @@ class StateNodeDefinition<S extends State> implements StateNode {
   }
 
   void callDoneActions<E extends Event>(E event) {
-    final actions = _onDone?.actions ?? [];
+    final actions = onDoneCallback?.actions ?? [];
     for (final action in actions) {
       action.call(event);
     }
@@ -228,7 +230,7 @@ class StateNodeDefinition<S extends State> implements StateNode {
       return [];
     }
 
-    return _eventTransitionsMap[E] ?? [];
+    return eventTransitionsMap[E] ?? [];
   }
 
   /// Return all the [TransitionDefinition] for the given node and it's parents.
