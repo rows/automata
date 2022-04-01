@@ -7,7 +7,6 @@ transparent as possible, whether it's:
 - Discussing the current state of the code
 - Submitting a fix
 - Proposing new features
-- Becoming a maintainer
 
 ## Proposing a Change
 
