@@ -36,7 +36,7 @@ void main() {
         );
 
         expect(
-          () => machine.validate(),
+          machine.validate,
           throwsA(isA<InvalidOnDoneCallbackException>()),
         );
       });
@@ -56,7 +56,7 @@ void main() {
         );
 
         expect(
-          () => machine.validate(),
+          machine.validate,
           throwsA(isA<InvalidOnDoneCallbackException>()),
         );
       });
@@ -74,7 +74,7 @@ void main() {
         );
 
         expect(
-          () => machine.validate(),
+          machine.validate,
           returnsNormally,
         );
       });
@@ -103,7 +103,7 @@ void main() {
           );
 
           expect(
-            () => machine.validate(),
+            machine.validate,
             throwsA(isA<InvalidOnDoneCallbackException>()),
           );
         },
@@ -134,7 +134,7 @@ void main() {
           );
 
           expect(
-            () => machine.validate(),
+            machine.validate,
             returnsNormally,
           );
         },
@@ -153,7 +153,7 @@ void main() {
         );
 
         expect(
-          () => machine.validate(),
+          machine.validate,
           returnsNormally,
         );
       });
@@ -177,7 +177,7 @@ void main() {
         );
 
         expect(
-          () => machine.validate(),
+          machine.validate,
           throwsA(isA<UnreachableTransitionException>()),
         );
       },
@@ -197,7 +197,7 @@ void main() {
       );
 
       expect(
-        () => machine.validate(),
+        machine.validate,
         throwsA(isA<Exception>()),
       );
     });
@@ -214,7 +214,7 @@ void main() {
       );
 
       expect(
-        () => machine.validate(),
+        machine.validate,
         returnsNormally,
       );
     });
@@ -231,23 +231,23 @@ void main() {
       );
 
       expect(
-        () => machine.validate(),
+        machine.validate,
         returnsNormally,
       );
     });
   });
 }
 
-class _Other extends State {}
+class _Other extends AutomataState {}
 
-class _StateA extends State {}
+class _StateA extends AutomataState {}
 
-class _StateB extends State {}
+class _StateB extends AutomataState {}
 
-class _StateC extends State {}
+class _StateC extends AutomataState {}
 
-class _StateD extends State {}
+class _StateD extends AutomataState {}
 
-class _StateE extends State {}
+class _StateE extends AutomataState {}
 
-class _EventA extends Event {}
+class _EventA extends AutomataEvent {}

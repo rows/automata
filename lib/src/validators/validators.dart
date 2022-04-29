@@ -51,7 +51,7 @@ class ValidateUnreachableTransitions extends Validator<StateNodeDefinition> {
   void execute() {
     final events = <Type>{};
     data.eventTransitionsMap.forEach((event, transitions) {
-      for (var transition in transitions) {
+      for (final transition in transitions) {
         if (transition.condition != null) {
           continue;
         }
@@ -110,7 +110,7 @@ class ValidateInvalidOnDoneCallback extends Validator<StateNodeDefinition> {
 
     if (data.stateNodeType == StateNodeType.parallel) {
       final allChildrenHaveATerminalSubState = data.childNodes.values.every(
-        (node) => _hasTerminalSubState(node),
+        _hasTerminalSubState,
       );
 
       if (!allChildrenHaveATerminalSubState) {

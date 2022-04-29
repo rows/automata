@@ -1,4 +1,4 @@
-import 'package:automata/automata.dart';
+import '../automata.dart';
 
 /// [Exception] thrown when a [StateMachine] is defined without any
 /// atomic state node.
@@ -18,7 +18,8 @@ class UnreachableTransitionException implements Exception {
   String toString() => 'The transition with Event $event is not reachable.';
 }
 
-/// [Exception] thrown when a node already has a child node for the given [State].
+/// [Exception] thrown when a node already has a child node for the given
+/// [State].
 class DuplicateStateException implements Exception {
   final Type state;
 
@@ -26,7 +27,7 @@ class DuplicateStateException implements Exception {
 
   @override
   String toString() => 'The state $state is already in use. '
-      'Every State must be unique among it\'s sibilings.';
+      "Every State must be unique among it's sibilings.";
 }
 
 /// [Exception] thrown when onDone is placed in a state that doesnt have any

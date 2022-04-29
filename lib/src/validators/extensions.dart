@@ -1,6 +1,5 @@
-import 'package:automata/src/state_node.dart';
-
 import '../../automata.dart';
+import '../state_node.dart';
 import 'validators.dart';
 
 /// Extension on [StateMachine] to add a validation entrypoint.
@@ -32,7 +31,7 @@ extension StateNodeDefinitionValidator on StateNodeDefinition {
       validator.execute();
     }
 
-    for (var node in childNodes.values) {
+    for (final node in childNodes.values) {
       node.validate();
     }
   }
