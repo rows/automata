@@ -2,6 +2,8 @@ import '../../automata.dart';
 import '../exceptions.dart';
 import '../state_node.dart';
 
+/// Abstract class to be extended by any [StateMachine] or [StateNode]
+/// validator classes.
 abstract class Validator<T> {
   final T data;
   const Validator(this.data);
