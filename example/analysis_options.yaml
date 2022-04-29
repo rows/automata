@@ -1,5 +1,6 @@
-include: package:flutter_lints/flutter.yaml
+include: package:rows_lint/analysis_options.yaml
 
 linter:
   rules:
-    avoid_print: false 
+    avoid_print: false
+    avoid_dynamic_calls: false

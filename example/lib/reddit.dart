@@ -1,7 +1,8 @@
 import 'package:automata/automata.dart';
 import 'package:dio/dio.dart';
-import 'package:example/state_builder.dart';
 import 'package:flutter/material.dart';
+
+import 'state_builder.dart';
 
 class _RedditEntry {
   final String title;
@@ -14,21 +15,22 @@ Future<List<_RedditEntry>> _fetchReddit({required bool shouldFail}) async {
     throw Exception('something went wrong');
   }
 
-  var response = await Dio().get('https://www.reddit.com/r/flutter.json');
+  final response =
+      await Dio().get<dynamic>('https://www.reddit.com/r/flutter.json');
 
   final children = response.data['data']['children'] as List<Object?>;
 
   return children.map<_RedditEntry>((item) {
-    final entry = item as Map<String, dynamic>;
+    final entry = item! as Map<String, dynamic>;
     return _RedditEntry(title: entry['data']['title'] as String);
   }).toList();
 }
 
 class StateMachineNotifier extends ChangeNotifier {
-  var value = <_RedditEntry>[];
+  List<_RedditEntry> value = <_RedditEntry>[];
 
   // For testing purposes lets make the fetch fail on first attempt.
-  var hasFetchedOnce = false;
+  bool hasFetchedOnce = false;
 
   late final machine = StateMachine.create(
     (g) => g
@@ -65,7 +67,7 @@ class StateMachineNotifier extends ChangeNotifier {
       ..state<_Failure>(
         builder: (b) => b..on<_OnRetry, _Loading>(),
       ),
-    onTransition: ((e, value) => notifyListeners()),
+    onTransition: (e, value) => notifyListeners(),
   );
 
   void send<E extends AutomataEvent>(E event) => machine.send(event);
@@ -112,9 +114,9 @@ class _RedditExampleState extends State<RedditExample> {
                 );
               }),
             },
-            defaultBuilder: ((context) {
+            defaultBuilder: (context) {
               return const Text('Loading');
-            }),
+            },
           );
         },
       ),

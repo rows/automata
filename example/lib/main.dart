@@ -1,5 +1,6 @@
-import 'package:example/reddit.dart';
 import 'package:flutter/material.dart';
+
+import 'reddit.dart';
 
 void main() {
   runApp(const MyApp());
