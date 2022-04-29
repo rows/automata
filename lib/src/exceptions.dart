@@ -7,7 +7,7 @@ class NoAtomicStateNodeException implements Exception {
   String toString() => 'No atomic nodes in this state machine';
 }
 
-/// [Exception] thrown when a node already has a transitions for a given
+/// [Exception] thrown when a node already has a transition for a given
 /// event without condition.
 class UnreachableTransitionException implements Exception {
   final Type event;
