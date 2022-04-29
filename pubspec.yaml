@@ -1,6 +1,6 @@
 name: automata
 description: A dart package to create finite state machines and state charts.
-version: 0.1.0
+version: 0.1.1
 repository: https://github.com/rows/automata
 homepage: https://github.com/rows/automata/wiki
 issue_tracker: https://github.com/rows/automata/issues
