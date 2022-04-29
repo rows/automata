@@ -11,6 +11,9 @@ import 'types.dart';
 /// to query it's current values.
 ///
 class StateMachine {
+  /// Machine identifier.
+  String? id;
+
   /// Hold all the currently active [StateNodeDefinition].
   late StateMachineValue value;
 
@@ -27,7 +30,7 @@ class StateMachine {
   /// [StateMachine] performs.
   OnTransitionCallback? onTransition;
 
-  StateMachine._(this.rootNode, {this.onTransition}) {
+  StateMachine._(this.rootNode, {this.id, this.onTransition}) {
     value = StateMachineValue(rootNode);
 
     // Get root's initial nodes and call entry on them with [InitialEvent]
@@ -50,12 +53,13 @@ class StateMachine {
   /// Creates a [StateMachine] using a builder pattern.
   factory StateMachine.create(
     void Function(StateNode) builder, {
+    String? id,
     OnTransitionCallback? onTransition,
   }) {
     final rootNode = StateNodeDefinition<RootState>();
     builder(rootNode);
 
-    return StateMachine._(rootNode, onTransition: onTransition);
+    return StateMachine._(rootNode, id: id, onTransition: onTransition);
   }
 
   /// Send an event to the state machine.
