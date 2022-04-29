@@ -27,7 +27,7 @@ class DuplicateStateException implements Exception {
 
   @override
   String toString() => 'The state $state is already in use. '
-      "Every State must be unique among its sibilings.";
+      'Every State must be unique among its sibilings.';
 }
 
 /// [Exception] thrown when onDone is placed in a state that doesnt have any
