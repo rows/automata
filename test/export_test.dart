@@ -4,13 +4,198 @@ import 'package:test/test.dart';
 void main() {
   test('should output a string with a XState machine', () async {
     final machine = _createMachine();
-    final result = await exportToXStateViz(machine, writeToFile: false);
 
     /// To be really sure that this is working properly, print the result
     /// and paste it into the stately's vizualizer: https://stately.ai/viz
-    expect(result.isNotEmpty, isTrue);
+    final result = await exportToXStateViz(machine, writeToFile: false);
+
+    final cleanupRegex = RegExp('\n| |\t');
+    expect(
+      result.replaceAll(cleanupRegex, ''),
+      expectedSnapshot.replaceAll(cleanupRegex, ''),
+    );
   });
 }
+
+const expectedSnapshot = '''
+import { createMachine } from "xstate";
+
+const machine = createMachine(
+  {
+  "id": "test_machine",
+  "type": "compound",
+  "initial": "TypingText",
+  "states": {
+    "TypingText": {
+      "id": "{RootState, TypingText}",
+      "type": "atomic",
+      "on": {
+        "OnIsFormulaChange": {
+          "target": "#{RootState, TypingFormula}",
+          "cond": "canTransition"
+        }
+      }
+    },
+    "TypingFormula": {
+      "id": "{RootState, TypingFormula}",
+      "type": "parallel",
+      "states": {
+        "Autocomplete": {
+          "id": "{RootState, TypingFormula, Autocomplete}",
+          "type": "compound",
+          "initial": "AutocompleteUnavailable",
+          "states": {
+            "AutocompleteList": {
+              "id": "{RootState, TypingFormula, Autocomplete, AutocompleteList}",
+              "type": "atomic",
+              "on": {
+                "OnResetInteraction": {
+                  "target": "#{RootState, TypingFormula, Autocomplete, AutocompleteUnavailable}"
+                }
+              },
+              "always": [
+                {
+                  "target": "#{RootState, TypingFormula, Autocomplete, AutocompleteList}"
+                }
+              ]
+            },
+            "AutocompleteDetails": {
+              "id": "{RootState, TypingFormula, Autocomplete, AutocompleteDetails}",
+              "type": "atomic",
+              "on": {
+                "OnResetInteraction": {
+                  "target": "#{RootState, TypingFormula, Autocomplete, AutocompleteUnavailable}"
+                }
+              },
+              "always": [
+                {
+                  "target": "#{RootState, TypingFormula, Autocomplete, AutocompleteDetails}"
+                }
+              ]
+            },
+            "AutocompleteUnavailable": {
+              "id": "{RootState, TypingFormula, Autocomplete, AutocompleteUnavailable}",
+              "type": "atomic"
+            }
+          },
+          "on": {
+            "OnCaretPositionChange": {
+              "target": "#{RootState, TypingFormula, Autocomplete, AutocompleteUnavailable}"
+            }
+          }
+        },
+        "Point": {
+          "id": "{RootState, TypingFormula, Point}",
+          "type": "compound",
+          "initial": "PointUnavailable",
+          "states": {
+            "PointUnavailable": {
+              "id": "{RootState, TypingFormula, Point, PointUnavailable}",
+              "type": "atomic",
+              "on": {
+                "OnCaretPositionChange": {
+                  "target": "#{RootState, TypingFormula, Point, PointSlot}",
+                  "cond": "canTransition"
+                }
+              }
+            },
+            "PointSlot": {
+              "id": "{RootState, TypingFormula, Point, PointSlot}",
+              "type": "compound",
+              "initial": "PointSlotEnabled",
+              "states": {
+                "PointSlotEnabled": {
+                  "id": "{RootState, TypingFormula, Point, PointSlot, PointSlotEnabled}",
+                  "type": "atomic",
+                  "on": {
+                    "OnResetInteraction": {
+                      "target": "#{RootState, TypingFormula, Point, PointSlot, PointSlotDisabled}"
+                    },
+                    "OnTogglePoint": {
+                      "target": "#{RootState, TypingFormula, Point, PointSlot, PointSlotDisabled}"
+                    },
+                    "OnDisablePoint": {
+                      "target": "#{RootState, TypingFormula, Point, PointSlot, PointSlotDisabled}"
+                    },
+                    "OnCaretPositionChange": {
+                      "target": "#{RootState, TypingFormula, Point, PointUnavailable}",
+                      "cond": "canTransition"
+                    }
+                  }
+                },
+                "PointSlotDisabled": {
+                  "id": "{RootState, TypingFormula, Point, PointSlot, PointSlotDisabled}",
+                  "type": "atomic",
+                  "on": {
+                    "OnTogglePoint": {
+                      "target": "#{RootState, TypingFormula, Point, PointSlot, PointSlotEnabled}"
+                    },
+                    "OnCaretPositionChange": {
+                      "target": "#{RootState, TypingFormula, Point, PointUnavailable}",
+                      "cond": "canTransition"
+                    }
+                  }
+                }
+              }
+            },
+            "PointReference": {
+              "id": "{RootState, TypingFormula, Point, PointReference}",
+              "type": "compound",
+              "initial": "PointReferenceDisabled",
+              "states": {
+                "PointReferenceEnabled": {
+                  "id": "{RootState, TypingFormula, Point, PointReference, PointReferenceEnabled}",
+                  "type": "atomic",
+                  "on": {
+                    "OnResetInteraction": {
+                      "target": "#{RootState, TypingFormula, Point, PointReference, PointReferenceDisabled}"
+                    },
+                    "OnTogglePoint": {
+                      "target": "#{RootState, TypingFormula, Point, PointReference, PointReferenceDisabled}"
+                    },
+                    "OnDisablePoint": {
+                      "target": "#{RootState, TypingFormula, Point, PointReference, PointReferenceDisabled}"
+                    },
+                    "OnCaretPositionChange": {
+                      "target": "#{RootState, TypingFormula, Point, PointUnavailable}",
+                      "cond": "canTransition"
+                    }
+                  }
+                },
+                "PointReferenceDisabled": {
+                  "id": "{RootState, TypingFormula, Point, PointReference, PointReferenceDisabled}",
+                  "type": "atomic",
+                  "on": {
+                    "OnTogglePoint": {
+                      "target": "#{RootState, TypingFormula, Point, PointReference, PointReferenceEnabled}"
+                    },
+                    "OnCaretPositionChange": {
+                      "target": "#{RootState, TypingFormula, Point, PointUnavailable}",
+                      "cond": "canTransition"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "on": {
+        "OnIsFormulaChange": {
+          "target": "#{RootState, TypingText}",
+          "cond": "canTransition"
+        }
+      }
+    }
+  }
+},
+  {
+    guards: {
+      canTransition: () => true,
+    }
+  }
+);
+''';
 
 /// Creates a [StateMachine] to keep track of autocomplete and P&C states on
 /// the currently formula being composed.
