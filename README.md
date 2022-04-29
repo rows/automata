@@ -15,7 +15,7 @@
 </p>
 
 # Automata
-A dart package to implement Finite State Machines and State Charts following [SCXML](https://www.w3.org/TR/scxml) specification.
+A dart package to create Finite State Machines and State Charts following [SCXML](https://www.w3.org/TR/scxml) specification.
 
 The main highlights of automata are:
 - Declarative and type-based
