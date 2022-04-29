@@ -44,7 +44,7 @@ StateNodeDefinition getLeastCommonCompoundAncestor(
 
 /// Defines a transition to be attached to a [StateNodeDefinition].
 ///
-/// For a given [Event] the [StateMachine] should transition from [S] to
+/// For a given [AutomataEvent] the [StateMachine] should transition from [S] to
 /// [TargetState].
 ///
 /// A [TransitionDefinition] can produce side-effects via [actions] and be
@@ -54,17 +54,17 @@ StateNodeDefinition getLeastCommonCompoundAncestor(
 /// See also:
 /// - [SCXML: Transition](https://www.w3.org/TR/scxml/#transition)
 /// - [SCXML: Selecting Transitions](https://www.w3.org/TR/scxml/#SelectingTransitions)
-class TransitionDefinition<S extends State, E extends Event,
-    TargetState extends State> {
+class TransitionDefinition<S extends AutomataState, E extends AutomataEvent,
+    TargetState extends AutomataState> {
   /// Defines the [TransitionType].
   final TransitionType type;
 
   /// If this [TransitionDefinition] is trigger [targetState] will be the new
-  /// [State]
+  /// [AutomataState]
   Type targetState;
 
   /// The state this transition is attached to.
-  final StateNodeDefinition<State> sourceStateNode;
+  final StateNodeDefinition<AutomataState> sourceStateNode;
 
   /// Optional condition that can be define to allow/deny the transition.
   final GuardCondition<E>? condition;
@@ -206,14 +206,14 @@ class TransitionDefinition<S extends State, E extends Event,
       }
     }
 
-    // trigger all on entrys based on common ancestor
-    for (final node in entryNodes) {
-      node.callEntryAction(e);
-    }
-
     // update state of mind
     exitNodes.forEach(value.remove);
     entryNodes.forEach(value.add);
+
+    // trigger all on entrys based on common ancestor
+    for (final node in entryNodes) {
+      node.callEntryAction(value, e);
+    }
 
     // Call onDone for all parent node in which children have reached a
     // terminal (final) state

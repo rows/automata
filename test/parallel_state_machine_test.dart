@@ -28,72 +28,72 @@ StateMachine createMachine() {
   return machine;
 }
 
-class OnKickStart implements Event {}
+class OnKickStart implements AutomataEvent {}
 
-class Main implements State {}
+class Main implements AutomataState {}
 
-class Start implements State {}
+class Start implements AutomataState {}
 
-class First implements State {}
+class First implements AutomataState {}
 
-class Second implements State {}
+class Second implements AutomataState {}
 
-class One implements State {}
+class One implements AutomataState {}
 
-class Two implements State {}
+class Two implements AutomataState {}
 
-class Three implements State {}
+class Three implements AutomataState {}
 
-class Four implements State {}
+class Four implements AutomataState {}
 
-class OnTickFirst implements Event {}
+class OnTickFirst implements AutomataEvent {}
 
-class OnTickSecond implements Event {}
+class OnTickSecond implements AutomataEvent {}
 
-class OnToggle implements Event {}
+class OnToggle implements AutomataEvent {}
 
 void main() {
   test('should properly define initial state', () async {
     final machine = createMachine();
-    expect(machine.isInState<Start>(), isTrue);
+    expect(machine.isInState(Start), isTrue);
   });
 
   test('should transition to intial state of compound machine', () async {
     final machine = createMachine();
 
-    expect(machine.isInState<Start>(), isTrue);
-    expect(machine.isInState<Main>(), isFalse);
+    expect(machine.isInState(Start), isTrue);
+    expect(machine.isInState(Main), isFalse);
 
     machine.send(OnKickStart());
-    expect(machine.isInState<Main>(), isTrue);
-    expect(machine.isInState<First>(), isTrue);
-    expect(machine.isInState<One>(), isTrue);
-    expect(machine.isInState<Two>(), isFalse);
-    expect(machine.isInState<Second>(), isTrue);
-    expect(machine.isInState<Three>(), isTrue);
-    expect(machine.isInState<Four>(), isFalse);
+    expect(machine.isInState(Main), isTrue);
+    expect(machine.isInState(First), isTrue);
+    expect(machine.isInState(One), isTrue);
+    expect(machine.isInState(Two), isFalse);
+    expect(machine.isInState(Second), isTrue);
+    expect(machine.isInState(Three), isTrue);
+    expect(machine.isInState(Four), isFalse);
   });
 
   test('should be able to transition compound stated machines', () async {
     final machine = createMachine();
 
     machine.send(OnKickStart());
-    expect(machine.isInState<Main>(), isTrue);
-    expect(machine.isInState<First>(), isTrue);
-    expect(machine.isInState<One>(), isTrue);
-    expect(machine.isInState<Two>(), isFalse);
-    expect(machine.isInState<Second>(), isTrue);
-    expect(machine.isInState<Three>(), isTrue);
-    expect(machine.isInState<Four>(), isFalse);
+    expect(machine.isInState(Main), isTrue);
+    expect(machine.isInState(First), isTrue);
+    expect(machine.isInState(One), isTrue);
+    expect(machine.isInState(Two), isFalse);
+    expect(machine.isInState(Second), isTrue);
+    expect(machine.isInState(Three), isTrue);
+    expect(machine.isInState(Four), isFalse);
 
     machine.send(OnToggle());
-    expect(machine.isInState<Main>(), isTrue);
-    expect(machine.isInState<First>(), isTrue);
-    expect(machine.isInState<One>(), isFalse);
-    expect(machine.isInState<Two>(), isTrue);
-    expect(machine.isInState<Second>(), isTrue);
-    expect(machine.isInState<Three>(), isFalse);
-    expect(machine.isInState<Four>(), isTrue);
+    expect(machine.isInState(Main), isTrue);
+    expect(machine.isInState(First), isTrue);
+    expect(machine.isInState(One), isFalse);
+    expect(machine.isInState(Two), isTrue);
+    expect(machine.isInState(Second), isTrue);
+    expect(machine.isInState(Three), isFalse);
+    expect(machine.isInState(Four), isTrue);
   });
 
   test(
@@ -103,33 +103,33 @@ void main() {
       final machine = createMachine();
 
       machine.send(OnKickStart());
-      expect(machine.isInState<Main>(), isTrue);
-      expect(machine.isInState<First>(), isTrue);
-      expect(machine.isInState<One>(), isTrue);
-      expect(machine.isInState<Two>(), isFalse);
-      expect(machine.isInState<Second>(), isTrue);
-      expect(machine.isInState<Three>(), isTrue);
-      expect(machine.isInState<Four>(), isFalse);
+      expect(machine.isInState(Main), isTrue);
+      expect(machine.isInState(First), isTrue);
+      expect(machine.isInState(One), isTrue);
+      expect(machine.isInState(Two), isFalse);
+      expect(machine.isInState(Second), isTrue);
+      expect(machine.isInState(Three), isTrue);
+      expect(machine.isInState(Four), isFalse);
 
       machine.send(OnToggle());
-      expect(machine.isInState<Main>(), isTrue);
-      expect(machine.isInState<First>(), isTrue);
-      expect(machine.isInState<One>(), isFalse);
-      expect(machine.isInState<Two>(), isTrue);
-      expect(machine.isInState<Second>(), isTrue);
-      expect(machine.isInState<Three>(), isFalse);
-      expect(machine.isInState<Four>(), isTrue);
+      expect(machine.isInState(Main), isTrue);
+      expect(machine.isInState(First), isTrue);
+      expect(machine.isInState(One), isFalse);
+      expect(machine.isInState(Two), isTrue);
+      expect(machine.isInState(Second), isTrue);
+      expect(machine.isInState(Three), isFalse);
+      expect(machine.isInState(Four), isTrue);
 
       machine.send(OnTickFirst());
-      expect(machine.isInState<Main>(), isTrue);
+      expect(machine.isInState(Main), isTrue);
       // First goes back to initial state
-      expect(machine.isInState<First>(), isTrue);
-      expect(machine.isInState<One>(), isTrue);
-      expect(machine.isInState<Two>(), isFalse);
+      expect(machine.isInState(First), isTrue);
+      expect(machine.isInState(One), isTrue);
+      expect(machine.isInState(Two), isFalse);
       // Second should keep previous state
-      expect(machine.isInState<Second>(), isTrue);
-      expect(machine.isInState<Three>(), isFalse);
-      expect(machine.isInState<Four>(), isTrue);
+      expect(machine.isInState(Second), isTrue);
+      expect(machine.isInState(Three), isFalse);
+      expect(machine.isInState(Four), isTrue);
     },
   );
 }

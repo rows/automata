@@ -28,6 +28,9 @@ The main highlights of automata are:
 - onEntry / onExit
 - onTransition
 
+## Documentation
+Check our wiki for a more in-depth documentation: https://github.com/rows/automata/wiki
+
 ## Super quick start:
 
 ```

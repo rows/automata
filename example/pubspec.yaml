@@ -1,0 +1,21 @@
+name: automata_example
+description: Example project for Automata.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ">=2.16.1 <3.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  dio: ^4.0.4
+  automata: 
+    path: ../
+
+dev_dependencies:
+  rows_lint: ^0.1.0
+
+flutter:
+  uses-material-design: true

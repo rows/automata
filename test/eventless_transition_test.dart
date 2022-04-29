@@ -7,16 +7,16 @@ void main() {
       final state = Scoreboard(points: -50);
       final machine = _createMachine(state);
 
-      expect(machine.isInState<Lose>(), isTrue);
-      expect(machine.isInState<Win>(), isFalse);
+      expect(machine.isInState(Lose), isTrue);
+      expect(machine.isInState(Win), isFalse);
     });
 
     test('should transition to lose if award points is higher than 99', () {
       final state = Scoreboard(points: 100);
       final machine = _createMachine(state);
 
-      expect(machine.isInState<Lose>(), isFalse);
-      expect(machine.isInState<Win>(), isTrue);
+      expect(machine.isInState(Lose), isFalse);
+      expect(machine.isInState(Win), isTrue);
     });
   });
 
@@ -25,27 +25,27 @@ void main() {
       final scoreboard = Scoreboard();
       final machine = _createMachine(scoreboard);
 
-      expect(machine.isInState<Playing>(), isTrue);
+      expect(machine.isInState(Playing), isTrue);
 
       machine.send(const OnAwardPoints(points: 50));
-      expect(machine.isInState<Playing>(), isTrue);
+      expect(machine.isInState(Playing), isTrue);
 
       machine.send(const OnAwardPoints(points: -110));
 
-      expect(machine.isInState<Lose>(), isTrue);
-      expect(machine.isInState<Win>(), isFalse);
+      expect(machine.isInState(Lose), isTrue);
+      expect(machine.isInState(Win), isFalse);
     });
 
     test('should transition to lose if award points is higher than 99', () {
       final scoreboard = Scoreboard();
       final machine = _createMachine(scoreboard);
 
-      expect(machine.isInState<Playing>(), isTrue);
+      expect(machine.isInState(Playing), isTrue);
 
       machine.send(const OnAwardPoints(points: 100));
 
-      expect(machine.isInState<Lose>(), isFalse);
-      expect(machine.isInState<Win>(), isTrue);
+      expect(machine.isInState(Lose), isFalse);
+      expect(machine.isInState(Win), isTrue);
     });
   });
 }
@@ -56,19 +56,19 @@ class Scoreboard {
   Scoreboard({this.points = 0});
 }
 
-class Playing extends State {}
+class Playing extends AutomataState {}
 
-class Win extends State {}
+class Win extends AutomataState {}
 
-class Lose extends State {}
+class Lose extends AutomataState {}
 
-class OnAwardPoints extends Event {
+class OnAwardPoints extends AutomataEvent {
   final int points;
 
   const OnAwardPoints({required this.points});
 }
 
-StateMachine _createMachine<S extends State>(Scoreboard scoreboard) {
+StateMachine _createMachine<S extends AutomataState>(Scoreboard scoreboard) {
   return StateMachine.create(
     (g) => g
       ..initial<Playing>()
