@@ -8,7 +8,7 @@ assignees: ''
 ---
 
 ### Given
-<!-- Conditions such as version and environment -->
+<!-- Conditions such as version, environment and a snippet of machine the definition -->
 
 
 ### When
