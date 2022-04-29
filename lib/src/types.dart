@@ -9,7 +9,7 @@ import 'transition_definition.dart';
 /// All your [AutomataState] classes MUST extend this [AutomataState] class.
 ///
 /// ```dart
-/// class Playing extends State {}
+/// class Playing extends AutomataState {}
 ///
 ///  final machine = StateMachine.create((g) => g
 ///       ..state<Playing>(builder: (b) => b
@@ -27,7 +27,7 @@ abstract class AutomataState {
 /// All your [AutomataEvent] class MUST extends the [AutomataEvent] class
 ///
 /// ```dart
-/// class OnAwardPoints extends Event {
+/// class OnAwardPoints extends AutomataEvent {
 ///   final int points;
 ///
 ///   OnAwardPoints({required this.points});

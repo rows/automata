@@ -15,7 +15,7 @@
 </p>
 
 # Automata
-A dart (incomplete) implementation of a finite state machine following [SCXML](https://www.w3.org/TR/scxml) specification.
+A dart package to implement Finite State Machines and State Charts following [SCXML](https://www.w3.org/TR/scxml) specification.
 
 The main highlights of automata are:
 - Declarative and type-based
@@ -45,9 +45,9 @@ flutter pub add automata
 ```dart
 import 'package:automata/automata.dart';
 
-class Inactive extends State {}
-class Active extends State {}
-class OnToggle extends Event {}
+class Inactive extends AutomataState {}
+class Active extends AutomataState {}
+class OnToggle extends AutomataEvent {}
 
 final machine = StateMachine.create(
   (g) => g
