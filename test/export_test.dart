@@ -320,46 +320,46 @@ StateMachine _createMachine() {
   return machine;
 }
 
-class TypingText implements State {}
+class TypingText implements AutomataState {}
 
-class TypingFormula implements State {}
+class TypingFormula implements AutomataState {}
 
-class Autocomplete implements State {}
+class Autocomplete implements AutomataState {}
 
-class AutocompleteUnavailable implements State {}
+class AutocompleteUnavailable implements AutomataState {}
 
-class AutocompleteList implements State {}
+class AutocompleteList implements AutomataState {}
 
-class AutocompleteDetails implements State {}
+class AutocompleteDetails implements AutomataState {}
 
-class Point implements State {}
+class Point implements AutomataState {}
 
-class PointUnavailable implements State {}
+class PointUnavailable implements AutomataState {}
 
-class PointSlot implements State {}
+class PointSlot implements AutomataState {}
 
-class PointSlotEnabled implements State {}
+class PointSlotEnabled implements AutomataState {}
 
-class PointSlotDisabled implements State {}
+class PointSlotDisabled implements AutomataState {}
 
-class PointReference implements State {}
+class PointReference implements AutomataState {}
 
-class PointReferenceDisabled implements State {}
+class PointReferenceDisabled implements AutomataState {}
 
-class PointReferenceEnabled implements State {}
+class PointReferenceEnabled implements AutomataState {}
 
-class OnIsFormulaChange implements Event {
+class OnIsFormulaChange implements AutomataEvent {
   final bool isFormula;
   const OnIsFormulaChange({required this.isFormula});
 }
 
-class OnTogglePoint implements Event {
+class OnTogglePoint implements AutomataEvent {
   const OnTogglePoint();
 }
 
-class OnDisablePoint implements Event {}
+class OnDisablePoint implements AutomataEvent {}
 
-class OnCaretPositionChange implements Event {
+class OnCaretPositionChange implements AutomataEvent {
   final bool canTransitionToAutocompleteList;
   final bool canTransitionToAutocompleteDetails;
   final bool canTransitionToPointReference;
@@ -373,7 +373,7 @@ class OnCaretPositionChange implements Event {
   });
 }
 
-class OnResetInteraction implements Event {
+class OnResetInteraction implements AutomataEvent {
   const OnResetInteraction();
 }
 
