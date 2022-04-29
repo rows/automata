@@ -25,6 +25,7 @@ The main highlights of automata are:
 - Guard conditions
 - Eventless transitions
 - Actions
+- Invoke async services
 - onEntry / onExit
 - onTransition
 
@@ -66,7 +67,7 @@ final machine = StateMachine.create(
   ),
 );
 
-machine.send(OnMelted());
+machine.send(OnToggle());
 ```
 
 ## Credits
