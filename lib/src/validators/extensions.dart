@@ -2,7 +2,10 @@ import '../../automata.dart';
 import '../state_node.dart';
 import 'validators.dart';
 
-/// Extension on [StateMachine] to add a validation entrypoint.
+/// Extension on [StateMachine] to perform validations.
+///
+/// See also:
+/// - [ValidateAtomicStates]
 extension StateMachineValidator on StateMachine {
   /// Kick start validation by invoking validate on the rootNode, which will
   /// then traverse the statechart invoking validate on all nodes.
@@ -12,14 +15,18 @@ extension StateMachineValidator on StateMachine {
     ];
 
     for (final validator in _validators) {
-      validator.execute();
+      validator();
     }
 
     return rootNode.validate();
   }
 }
 
-/// Extension on [StateNodeDefinition] to add validations.
+/// Extension on [StateNodeDefinition] to perform validations.
+///
+/// See also:
+/// - [ValidateUnreachableTransitions]
+/// - [ValidateInvalidOnDoneCallback]
 extension StateNodeDefinitionValidator on StateNodeDefinition {
   void validate() {
     final _validators = [
@@ -28,7 +35,7 @@ extension StateNodeDefinitionValidator on StateNodeDefinition {
     ];
 
     for (final validator in _validators) {
-      validator.execute();
+      validator();
     }
 
     for (final node in childNodes.values) {

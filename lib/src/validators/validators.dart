@@ -6,7 +6,7 @@ abstract class Validator<T> {
   final T data;
   const Validator(this.data);
 
-  void execute();
+  void call();
 }
 
 /// Throws [NoAtomicStateNodeException] if no [StateNodeType.atomic] or
@@ -33,7 +33,7 @@ class ValidateAtomicStates extends Validator<StateMachine> {
   }
 
   @override
-  void execute() {
+  void call() {
     final hasAnyAtomicNode = _hasAnyAtomicNode(data.rootNode);
     if (!hasAnyAtomicNode) {
       throw NoAtomicStateNodeException();
@@ -48,7 +48,7 @@ class ValidateUnreachableTransitions extends Validator<StateNodeDefinition> {
   const ValidateUnreachableTransitions(StateNodeDefinition data) : super(data);
 
   @override
-  void execute() {
+  void call() {
     final events = <Type>{};
     data.eventTransitionsMap.forEach((event, transitions) {
       for (final transition in transitions) {
@@ -87,7 +87,7 @@ class ValidateInvalidOnDoneCallback extends Validator<StateNodeDefinition> {
   }
 
   @override
-  void execute() {
+  void call() {
     if (data.onDoneCallback == null) {
       return;
     }

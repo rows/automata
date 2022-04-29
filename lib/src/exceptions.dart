@@ -54,7 +54,7 @@ class InvalidOnDoneCallbackException implements Exception {
       case StateNodeType.atomic:
         return 'The onDone callback in the node with state $state'
             ' is invalid due to this not being a atomic node.';
-      case StateNodeType.terminal:
+      default:
         return '';
     }
   }
