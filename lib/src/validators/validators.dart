@@ -45,7 +45,7 @@ class ValidateAtomicStates extends Validator<StateMachine> {
 
 /// Throws [UnreachableTransitionException] when a node defines
 /// two transitions without conditions to the same [Event]. Only the first
-/// one will ever be matched and therefore its the only valid.
+/// one will ever be matched and therefore it's the only valid.
 class ValidateUnreachableTransitions extends Validator<StateNodeDefinition> {
   const ValidateUnreachableTransitions(StateNodeDefinition data) : super(data);
 
