@@ -68,7 +68,7 @@ class ValidateUnreachableTransitions extends Validator<StateNodeDefinition> {
   }
 }
 
-/// Throws a [InvalidOnDoneCallbackException] if the current node has a
+/// Throws a [InvalidOnDoneCallbackException] if the current node has an
 /// onDone callback but that callback doesn't meet the criteria to ever
 /// get called.
 ///
