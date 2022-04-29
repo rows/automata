@@ -4,7 +4,7 @@ import 'package:flutter/widgets.dart';
 // TODO(canastro): in a follow-up PR I will either create a separate sub-package
 //  for automata_flutter, or move this (and test) to the automata package.
 
-/// Buildes a wiget for a [AutomataStateBuilderFactory]
+/// Builds a widget for a [AutomataStateBuilderFactory]
 typedef AutomataStateWidgetBuilder = Widget Function(
   BuildContext context,
 );
@@ -28,7 +28,7 @@ class AutomataStateBuilderFactory {
 ///
 /// Be aware that if your [StateMachine] might be in multiple states if it
 /// has a [StateNodeType.parallel] node. In that case, this widget might not
-/// suite your needs as it will render the first state that matches.
+/// suit your needs as it will render the first state that matches.
 ///
 /// Usage example
 /// ```dart

@@ -154,7 +154,10 @@ typedef InvokeSrcCallback<Result> = Future<Result> Function(AutomataEvent e);
 
 /// [AutomataEvent] triggered an a [InvokeSrcCallback] is executed successfully.
 class DoneInvokeEvent<Result> extends AutomataEvent {
+  /// Identifier of the [InvokeDefinition] which triggered this [AutomataEvent].
   final String id;
+
+  /// Data returned from a successful call to [InvokeDefinition.src] callback.
   final Result data;
 
   const DoneInvokeEvent({required this.id, required this.data});

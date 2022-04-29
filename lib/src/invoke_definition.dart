@@ -10,28 +10,46 @@ import 'types.dart';
 class InvokeDefinition<S extends AutomataState, E extends AutomataEvent,
     Result> {
   /// Identifier of this definition.
+  ///
+  /// See also:
+  /// - [InvokeDefinition.id]
   late final String _id;
 
   /// Source node to which this invoke is attached to.
   final StateNodeDefinition sourceStateNode;
 
   /// Success transition.
+  ///
+  /// See also:
+  /// - [InvokeDefinition.onDone]
   late final TransitionDefinition _onDoneTransition;
 
   /// Failure transition.
+  ///
+  /// See also:
+  /// - [InvokeDefinition.onError]
   late final TransitionDefinition _onErrorTransition;
 
-  /// Invoke async callback.
+  /// Invoke's async callback.
+  ///
+  /// See also:
+  /// - [InvokeDefinition.src]
   late final InvokeSrcCallback<Result> _callback;
 
   InvokeDefinition({required this.sourceStateNode});
 
   /// Set the [InvokeDefinition]'s identifier.
+  ///
+  /// This identifier will be returned within the result of the invocation.
   void id(String value) {
     _id = value;
   }
 
   /// Set the [InvokeDefinition]'s src async callback.
+  ///
+  /// When the containing [StateNode] is entered, the given callback will be
+  /// invoked. Depending on how the [Future] resolves, it will call the
+  /// configured [onDone] or [onError] callbacks.
   void src(InvokeSrcCallback<Result> callback) {
     _callback = callback;
   }
