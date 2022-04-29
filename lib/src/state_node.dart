@@ -1,6 +1,7 @@
 import 'package:collection/collection.dart';
 import 'package:meta/meta.dart';
 
+import 'exceptions.dart';
 import 'invoke_definition.dart';
 import 'state_machine_value.dart';
 import 'transition_definition.dart';
@@ -55,7 +56,10 @@ class StateNodeDefinition<S extends AutomataState> implements StateNode {
   /// Action invoked on exit this [StateNodeDefinition].
   OnExitAction? _onExitAction;
 
-  OnDone? _onDone;
+  /// Callback called when a child node of [StateNodeType.terminal] is
+  /// entered.
+  @internal
+  OnDone? onDoneCallback;
 
   /// User defined [StateNodeType].
   final StateNodeType? _stateNodeType;
@@ -92,11 +96,14 @@ class StateNodeDefinition<S extends AutomataState> implements StateNode {
     //  the default initial state is the first child state in document order."
     if (stateNodeType == StateNodeType.compound) {
       late StateNodeDefinition node;
-      if (_initialState != null) {
-        final initial = _initialState;
 
+      final initial = _initialState;
+      if (initial != null) {
         if (!childNodes.containsKey(initial)) {
-          throw Exception('Initial state "$initial" not found on "$stateType"');
+          throw UnreachableInitialStateException(
+            initialState: initial,
+            currentState: stateType,
+          );
         }
         node = childNodes[initial]!;
       } else {
@@ -135,16 +142,16 @@ class StateNodeDefinition<S extends AutomataState> implements StateNode {
   /// Optionally it can define a [StateNodeType], if no specific type is
   /// provided then one its inferred.
   @override
-  void state<I extends AutomataState>({
+  void state<NewStateType extends AutomataState>({
     StateBuilder? builder,
     StateNodeType? type,
   }) {
-    final newStateNode = StateNodeDefinition<I>(
+    final newStateNode = StateNodeDefinition<NewStateType>(
       parentNode: this,
       stateNodeType: type,
     );
 
-    childNodes[I] = newStateNode;
+    childNodes[NewStateType] = newStateNode;
     builder?.call(newStateNode);
   }
 
@@ -183,7 +190,7 @@ class StateNodeDefinition<S extends AutomataState> implements StateNode {
       actions: actions,
     );
 
-    eventTransitionsMap[NullEvent] = eventTransitionsMap[NullEvent] ?? [];
+    eventTransitionsMap[NullEvent] ??= <TransitionDefinition>[];
     eventTransitionsMap[NullEvent]!.add(onTransition);
   }
 
@@ -202,16 +209,9 @@ class StateNodeDefinition<S extends AutomataState> implements StateNode {
   /// Sets callback that will bne called when:
   /// - for a [StateNodeType.compound] - a child final substate is activated.
   /// - for a [StateNodeType.parallel] - all sub-states are in final states.
-  ///
-  /// TODO:
-  ///  when we have validations:
-  ///  1. a onDone can only be placed on a compound state wich has a descendant
-  ///  final node.
-  ///  2. a onDone can only be placed on a parallel state which every child
-  ///  has a descendant final node.
   @override
   void onDone<E extends AutomataEvent>({required List<Action<E>> actions}) {
-    _onDone = OnDone<E>(actions: actions);
+    onDoneCallback = OnDone<E>(actions: actions);
   }
 
   /// Invoke this node's [OnEntryAction].
@@ -231,7 +231,7 @@ class StateNodeDefinition<S extends AutomataState> implements StateNode {
   }
 
   void callDoneActions<E extends AutomataEvent>(E event) {
-    final actions = _onDone?.actions ?? [];
+    final actions = onDoneCallback?.actions ?? [];
     for (final action in actions) {
       action.call(event);
     }
