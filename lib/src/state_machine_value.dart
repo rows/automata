@@ -15,7 +15,7 @@ class StateMachineValue {
 
   /// Check if the given [State] is in the path of any of the currently
   /// active [StateNodeDefinition].
-  bool isInState<S>() {
+  bool isInState(Type S) {
     for (final node in _activeNodes) {
       if (node.stateType == S) {
         return true;

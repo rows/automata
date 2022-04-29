@@ -15,8 +15,8 @@ void main() {
   test('should set initial state to TypingText', () {
     final machine = _createMachine(watcher);
 
-    expect(machine.isInState<TypingText>(), isTrue);
-    expect(machine.isInState<TypingFormula>(), isFalse);
+    expect(machine.isInState(TypingText), isTrue);
+    expect(machine.isInState(TypingFormula), isFalse);
   });
 
   test(
@@ -24,13 +24,13 @@ void main() {
     () {
       final machine = _createMachine(watcher);
 
-      expect(machine.isInState<TypingText>(), isTrue);
-      expect(machine.isInState<TypingFormula>(), isFalse);
+      expect(machine.isInState(TypingText), isTrue);
+      expect(machine.isInState(TypingFormula), isFalse);
 
       machine.send(const OnIsFormulaChange(isFormula: false));
 
-      expect(machine.isInState<TypingText>(), isTrue);
-      expect(machine.isInState<TypingFormula>(), isFalse);
+      expect(machine.isInState(TypingText), isTrue);
+      expect(machine.isInState(TypingFormula), isFalse);
     },
   );
 
@@ -39,17 +39,17 @@ void main() {
     () {
       final machine = _createMachine(watcher);
 
-      expect(machine.isInState<TypingText>(), isTrue);
-      expect(machine.isInState<TypingFormula>(), isFalse);
+      expect(machine.isInState(TypingText), isTrue);
+      expect(machine.isInState(TypingFormula), isFalse);
 
       machine.send(const OnIsFormulaChange(isFormula: true));
 
-      expect(machine.isInState<TypingText>(), isFalse);
-      expect(machine.isInState<TypingFormula>(), isTrue);
-      expect(machine.isInState<Autocomplete>(), isTrue);
-      expect(machine.isInState<AutocompleteUnavailable>(), isTrue);
-      expect(machine.isInState<Point>(), isTrue);
-      expect(machine.isInState<PointUnavailable>(), isTrue);
+      expect(machine.isInState(TypingText), isFalse);
+      expect(machine.isInState(TypingFormula), isTrue);
+      expect(machine.isInState(Autocomplete), isTrue);
+      expect(machine.isInState(AutocompleteUnavailable), isTrue);
+      expect(machine.isInState(Point), isTrue);
+      expect(machine.isInState(PointUnavailable), isTrue);
     },
   );
 
@@ -60,12 +60,12 @@ void main() {
       final machine = _createMachine(watcher);
 
       machine.send(const OnIsFormulaChange(isFormula: true));
-      expect(machine.isInState<TypingText>(), isFalse);
-      expect(machine.isInState<TypingFormula>(), isTrue);
-      expect(machine.isInState<Autocomplete>(), isTrue);
-      expect(machine.isInState<AutocompleteUnavailable>(), isTrue);
-      expect(machine.isInState<Point>(), isTrue);
-      expect(machine.isInState<PointUnavailable>(), isTrue);
+      expect(machine.isInState(TypingText), isFalse);
+      expect(machine.isInState(TypingFormula), isTrue);
+      expect(machine.isInState(Autocomplete), isTrue);
+      expect(machine.isInState(AutocompleteUnavailable), isTrue);
+      expect(machine.isInState(Point), isTrue);
+      expect(machine.isInState(PointUnavailable), isTrue);
 
       machine.send(
         const OnCaretPositionChange(
@@ -74,23 +74,23 @@ void main() {
         ),
       );
 
-      expect(machine.isInState<Autocomplete>(), isTrue);
-      expect(machine.isInState<AutocompleteUnavailable>(), isFalse);
-      expect(machine.isInState<AutocompleteList>(), isTrue);
-      expect(machine.isInState<AutocompleteDetails>(), isFalse);
-      expect(machine.isInState<PointReference>(), isTrue);
-      expect(machine.isInState<PointReferenceDisabled>(), isTrue);
-      expect(machine.isInState<PointSlot>(), isFalse);
+      expect(machine.isInState(Autocomplete), isTrue);
+      expect(machine.isInState(AutocompleteUnavailable), isFalse);
+      expect(machine.isInState(AutocompleteList), isTrue);
+      expect(machine.isInState(AutocompleteDetails), isFalse);
+      expect(machine.isInState(PointReference), isTrue);
+      expect(machine.isInState(PointReferenceDisabled), isTrue);
+      expect(machine.isInState(PointSlot), isFalse);
 
       machine.send(const OnIsFormulaChange(isFormula: true));
 
-      expect(machine.isInState<Autocomplete>(), isTrue);
-      expect(machine.isInState<AutocompleteUnavailable>(), isFalse);
-      expect(machine.isInState<AutocompleteList>(), isTrue);
-      expect(machine.isInState<AutocompleteDetails>(), isFalse);
-      expect(machine.isInState<PointReference>(), isTrue);
-      expect(machine.isInState<PointReferenceDisabled>(), isTrue);
-      expect(machine.isInState<PointSlot>(), isFalse);
+      expect(machine.isInState(Autocomplete), isTrue);
+      expect(machine.isInState(AutocompleteUnavailable), isFalse);
+      expect(machine.isInState(AutocompleteList), isTrue);
+      expect(machine.isInState(AutocompleteDetails), isFalse);
+      expect(machine.isInState(PointReference), isTrue);
+      expect(machine.isInState(PointReferenceDisabled), isTrue);
+      expect(machine.isInState(PointSlot), isFalse);
     },
   );
 
@@ -102,26 +102,26 @@ void main() {
       const OnCaretPositionChange(canTransitionToAutocompleteList: true),
     );
 
-    expect(machine.isInState<Autocomplete>(), isTrue);
-    expect(machine.isInState<AutocompleteUnavailable>(), isFalse);
-    expect(machine.isInState<AutocompleteList>(), isTrue);
-    expect(machine.isInState<AutocompleteDetails>(), isFalse);
+    expect(machine.isInState(Autocomplete), isTrue);
+    expect(machine.isInState(AutocompleteUnavailable), isFalse);
+    expect(machine.isInState(AutocompleteList), isTrue);
+    expect(machine.isInState(AutocompleteDetails), isFalse);
 
     machine.send(
       const OnCaretPositionChange(canTransitionToAutocompleteDetails: true),
     );
 
-    expect(machine.isInState<Autocomplete>(), isTrue);
-    expect(machine.isInState<AutocompleteUnavailable>(), isFalse);
-    expect(machine.isInState<AutocompleteList>(), isFalse);
-    expect(machine.isInState<AutocompleteDetails>(), isTrue);
+    expect(machine.isInState(Autocomplete), isTrue);
+    expect(machine.isInState(AutocompleteUnavailable), isFalse);
+    expect(machine.isInState(AutocompleteList), isFalse);
+    expect(machine.isInState(AutocompleteDetails), isTrue);
 
     machine.send(const OnCaretPositionChange());
 
-    expect(machine.isInState<Autocomplete>(), isTrue);
-    expect(machine.isInState<AutocompleteUnavailable>(), isTrue);
-    expect(machine.isInState<AutocompleteList>(), isFalse);
-    expect(machine.isInState<AutocompleteDetails>(), isFalse);
+    expect(machine.isInState(Autocomplete), isTrue);
+    expect(machine.isInState(AutocompleteUnavailable), isTrue);
+    expect(machine.isInState(AutocompleteList), isFalse);
+    expect(machine.isInState(AutocompleteDetails), isFalse);
   });
 
   test('should move between point reference states', () {
@@ -132,24 +132,24 @@ void main() {
       const OnCaretPositionChange(canTransitionToPointReference: true),
     );
 
-    expect(machine.isInState<Point>(), isTrue);
-    expect(machine.isInState<PointReference>(), isTrue);
-    expect(machine.isInState<PointReferenceEnabled>(), isFalse);
-    expect(machine.isInState<PointReferenceDisabled>(), isTrue);
+    expect(machine.isInState(Point), isTrue);
+    expect(machine.isInState(PointReference), isTrue);
+    expect(machine.isInState(PointReferenceEnabled), isFalse);
+    expect(machine.isInState(PointReferenceDisabled), isTrue);
 
     machine.send(const OnTogglePoint());
 
-    expect(machine.isInState<Point>(), isTrue);
-    expect(machine.isInState<PointReference>(), isTrue);
-    expect(machine.isInState<PointReferenceEnabled>(), isTrue);
-    expect(machine.isInState<PointReferenceDisabled>(), isFalse);
+    expect(machine.isInState(Point), isTrue);
+    expect(machine.isInState(PointReference), isTrue);
+    expect(machine.isInState(PointReferenceEnabled), isTrue);
+    expect(machine.isInState(PointReferenceDisabled), isFalse);
 
     machine.send(const OnTogglePoint());
 
-    expect(machine.isInState<Point>(), isTrue);
-    expect(machine.isInState<PointReference>(), isTrue);
-    expect(machine.isInState<PointReferenceEnabled>(), isFalse);
-    expect(machine.isInState<PointReferenceDisabled>(), isTrue);
+    expect(machine.isInState(Point), isTrue);
+    expect(machine.isInState(PointReference), isTrue);
+    expect(machine.isInState(PointReferenceEnabled), isFalse);
+    expect(machine.isInState(PointReferenceDisabled), isTrue);
   });
 
   test('should move between point slot states', () {
@@ -160,24 +160,24 @@ void main() {
       const OnCaretPositionChange(canTransitionToPointSlot: true),
     );
 
-    expect(machine.isInState<Point>(), isTrue);
-    expect(machine.isInState<PointSlot>(), isTrue);
-    expect(machine.isInState<PointSlotEnabled>(), isTrue);
-    expect(machine.isInState<PointSlotDisabled>(), isFalse);
+    expect(machine.isInState(Point), isTrue);
+    expect(machine.isInState(PointSlot), isTrue);
+    expect(machine.isInState(PointSlotEnabled), isTrue);
+    expect(machine.isInState(PointSlotDisabled), isFalse);
 
     machine.send(const OnTogglePoint());
 
-    expect(machine.isInState<Point>(), isTrue);
-    expect(machine.isInState<PointSlot>(), isTrue);
-    expect(machine.isInState<PointSlotEnabled>(), isFalse);
-    expect(machine.isInState<PointSlotDisabled>(), isTrue);
+    expect(machine.isInState(Point), isTrue);
+    expect(machine.isInState(PointSlot), isTrue);
+    expect(machine.isInState(PointSlotEnabled), isFalse);
+    expect(machine.isInState(PointSlotDisabled), isTrue);
 
     machine.send(const OnTogglePoint());
 
-    expect(machine.isInState<Point>(), isTrue);
-    expect(machine.isInState<PointSlot>(), isTrue);
-    expect(machine.isInState<PointSlotEnabled>(), isTrue);
-    expect(machine.isInState<PointSlotDisabled>(), isFalse);
+    expect(machine.isInState(Point), isTrue);
+    expect(machine.isInState(PointSlot), isTrue);
+    expect(machine.isInState(PointSlotEnabled), isTrue);
+    expect(machine.isInState(PointSlotDisabled), isFalse);
   });
 
   test('should be able to move back to TypingText', () {
@@ -188,22 +188,22 @@ void main() {
       const OnCaretPositionChange(canTransitionToAutocompleteList: true),
     );
 
-    expect(machine.isInState<TypingText>(), isFalse);
-    expect(machine.isInState<TypingFormula>(), isTrue);
-    expect(machine.isInState<Point>(), isTrue);
-    expect(machine.isInState<Autocomplete>(), isTrue);
-    expect(machine.isInState<AutocompleteList>(), isTrue);
+    expect(machine.isInState(TypingText), isFalse);
+    expect(machine.isInState(TypingFormula), isTrue);
+    expect(machine.isInState(Point), isTrue);
+    expect(machine.isInState(Autocomplete), isTrue);
+    expect(machine.isInState(AutocompleteList), isTrue);
     reset(watcher);
 
     const event = OnIsFormulaChange(isFormula: false);
     machine.send(event);
 
-    expect(machine.isInState<TypingText>(), isTrue);
-    expect(machine.isInState<TypingFormula>(), isFalse);
-    expect(machine.isInState<Point>(), isFalse);
-    expect(machine.isInState<Autocomplete>(), isFalse);
-    expect(machine.isInState<AutocompleteList>(), isFalse);
-    expect(machine.isInState<AutocompleteUnavailable>(), isFalse);
+    expect(machine.isInState(TypingText), isTrue);
+    expect(machine.isInState(TypingFormula), isFalse);
+    expect(machine.isInState(Point), isFalse);
+    expect(machine.isInState(Autocomplete), isFalse);
+    expect(machine.isInState(AutocompleteList), isFalse);
+    expect(machine.isInState(AutocompleteUnavailable), isFalse);
 
     verify(() => watcher.onExit(Autocomplete, event)).called(1);
   });
@@ -345,46 +345,46 @@ StateMachine _createMachine(Watcher watcher) {
   return machine;
 }
 
-class TypingText implements State {}
+class TypingText implements AutomataState {}
 
-class TypingFormula implements State {}
+class TypingFormula implements AutomataState {}
 
-class Autocomplete implements State {}
+class Autocomplete implements AutomataState {}
 
-class AutocompleteUnavailable implements State {}
+class AutocompleteUnavailable implements AutomataState {}
 
-class AutocompleteList implements State {}
+class AutocompleteList implements AutomataState {}
 
-class AutocompleteDetails implements State {}
+class AutocompleteDetails implements AutomataState {}
 
-class Point implements State {}
+class Point implements AutomataState {}
 
-class PointUnavailable implements State {}
+class PointUnavailable implements AutomataState {}
 
-class PointSlot implements State {}
+class PointSlot implements AutomataState {}
 
-class PointSlotEnabled implements State {}
+class PointSlotEnabled implements AutomataState {}
 
-class PointSlotDisabled implements State {}
+class PointSlotDisabled implements AutomataState {}
 
-class PointReference implements State {}
+class PointReference implements AutomataState {}
 
-class PointReferenceDisabled implements State {}
+class PointReferenceDisabled implements AutomataState {}
 
-class PointReferenceEnabled implements State {}
+class PointReferenceEnabled implements AutomataState {}
 
-class OnIsFormulaChange implements Event {
+class OnIsFormulaChange implements AutomataEvent {
   final bool isFormula;
   const OnIsFormulaChange({required this.isFormula});
 }
 
-class OnTogglePoint implements Event {
+class OnTogglePoint implements AutomataEvent {
   const OnTogglePoint();
 }
 
-class OnDisablePoint implements Event {}
+class OnDisablePoint implements AutomataEvent {}
 
-class OnCaretPositionChange implements Event {
+class OnCaretPositionChange implements AutomataEvent {
   final bool canTransitionToAutocompleteList;
   final bool canTransitionToAutocompleteDetails;
   final bool canTransitionToPointReference;
@@ -398,7 +398,7 @@ class OnCaretPositionChange implements Event {
   });
 }
 
-class OnResetInteraction implements Event {
+class OnResetInteraction implements AutomataEvent {
   const OnResetInteraction();
 }
 

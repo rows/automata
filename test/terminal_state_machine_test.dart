@@ -11,12 +11,12 @@ void main() {
       final actions = _MockStateMachineActions();
       final finalMachine = _createMachine(actions);
       finalMachine.send(_OnTimer());
-      expect(finalMachine.isInState<_Yellow>(), isTrue);
+      expect(finalMachine.isInState(_Yellow), isTrue);
 
       finalMachine.send(_OnTimer());
-      expect(finalMachine.isInState<_Red>(), isTrue);
-      expect(finalMachine.isInState<_Crosswalk1>(), isTrue);
-      expect(finalMachine.isInState<_Crosswalk2>(), isTrue);
+      expect(finalMachine.isInState(_Red), isTrue);
+      expect(finalMachine.isInState(_Crosswalk1), isTrue);
+      expect(finalMachine.isInState(_Crosswalk2), isTrue);
 
       expect(finalMachine.matchesStatePath([_Crosswalk1, _Walk]), isTrue);
       expect(finalMachine.matchesStatePath([_Crosswalk2, _Walk]), isTrue);
@@ -53,29 +53,29 @@ class _StateMachineActions {
 
 class _MockStateMachineActions extends Mock implements _StateMachineActions {}
 
-class _Green extends State {}
+class _Green extends AutomataState {}
 
-class _Yellow extends State {}
+class _Yellow extends AutomataState {}
 
-class _Red extends State {}
+class _Red extends AutomataState {}
 
-class _Crosswalk1 extends State {}
+class _Crosswalk1 extends AutomataState {}
 
-class _Walk extends State {}
+class _Walk extends AutomataState {}
 
-class _Wait extends State {}
+class _Wait extends AutomataState {}
 
-class _Stop extends State {}
+class _Stop extends AutomataState {}
 
-class _Stop2 extends State {}
+class _Stop2 extends AutomataState {}
 
-class _Crosswalk2 extends State {}
+class _Crosswalk2 extends AutomataState {}
 
-class _OnTimer extends Event {}
+class _OnTimer extends AutomataEvent {}
 
-class _OnPedWait extends Event {}
+class _OnPedWait extends AutomataEvent {}
 
-class _OnPedStop extends Event {}
+class _OnPedStop extends AutomataEvent {}
 
 StateMachine _createMachine(_StateMachineActions actions) {
   return StateMachine.create(

@@ -2,32 +2,32 @@ import 'package:automata/src/state_machine.dart';
 import 'package:automata/src/types.dart';
 import 'package:test/test.dart';
 
-class Solid extends State {}
+class Solid extends AutomataState {}
 
-class Liquid extends State {}
+class Liquid extends AutomataState {}
 
-class Gas extends State {}
+class Gas extends AutomataState {}
 
-class OnMelted extends Event {}
+class OnMelted extends AutomataEvent {}
 
-class OnVaporized extends Event {}
+class OnVaporized extends AutomataEvent {}
 
-class OnFroze extends Event {}
+class OnFroze extends AutomataEvent {}
 
-class OnCondensed extends Event {}
+class OnCondensed extends AutomataEvent {}
 
 void main() {
   test('should have the proper initial state', () {
     final machine = _createMachine();
-    expect(machine.isInState<Solid>(), isTrue);
-    expect(machine.isInState<Liquid>(), isFalse);
+    expect(machine.isInState(Solid), isTrue);
+    expect(machine.isInState(Liquid), isFalse);
   });
 
   test('should be able to transition to a given state', () {
     final machine = _createMachine();
     machine.send(OnMelted());
 
-    expect(machine.isInState<Liquid>(), isTrue);
+    expect(machine.isInState(Liquid), isTrue);
   });
 
   test('should call onEntry and onExit while transitioning', () {
@@ -60,7 +60,7 @@ void main() {
     machine.send(OnMelted());
 
     expect(calls, equals(['onEntrySolid', 'onExitSolid', 'onEntryLiquid']));
-    expect(machine.isInState<Liquid>(), isTrue);
+    expect(machine.isInState(Liquid), isTrue);
   });
 
   test('should only transition if the guard clause allows to', () {
@@ -77,22 +77,22 @@ void main() {
         ..state<Liquid>(),
     );
 
-    expect(machine.isInState<Solid>(), isTrue);
-    expect(machine.isInState<Liquid>(), isFalse);
+    expect(machine.isInState(Solid), isTrue);
+    expect(machine.isInState(Liquid), isFalse);
 
     machine.send(OnMelted());
-    expect(machine.isInState<Solid>(), isTrue);
-    expect(machine.isInState<Liquid>(), isFalse);
+    expect(machine.isInState(Solid), isTrue);
+    expect(machine.isInState(Liquid), isFalse);
 
     enabled = true;
 
     machine.send(OnMelted());
-    expect(machine.isInState<Solid>(), isFalse);
-    expect(machine.isInState<Liquid>(), isTrue);
+    expect(machine.isInState(Solid), isFalse);
+    expect(machine.isInState(Liquid), isTrue);
   });
 
   test('should invoke onTransition on all transitions', () {
-    final transitions = <Event>[];
+    final transitions = <AutomataEvent>[];
     final machine = StateMachine.create(
       (g) => g
         ..initial<Solid>()
@@ -132,7 +132,7 @@ void main() {
   });
 }
 
-StateMachine _createMachine<S extends State>() {
+StateMachine _createMachine<S extends AutomataState>() {
   return StateMachine.create(
     (g) => g
       ..initial<Solid>()

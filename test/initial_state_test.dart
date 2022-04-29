@@ -73,31 +73,31 @@ void main() {
   );
 }
 
-class Start extends State {}
+class Start extends AutomataState {}
 
-class Level1 extends State {}
+class Level1 extends AutomataState {}
 
-class Level11 extends State {}
+class Level11 extends AutomataState {}
 
-class Level12 extends State {}
+class Level12 extends AutomataState {}
 
-class Level121 extends State {}
+class Level121 extends AutomataState {}
 
-class Level122 extends State {}
+class Level122 extends AutomataState {}
 
-class Level2 extends State {}
+class Level2 extends AutomataState {}
 
-class Level21 extends State {}
+class Level21 extends AutomataState {}
 
-class Level22 extends State {}
+class Level22 extends AutomataState {}
 
-class Level221 extends State {}
+class Level221 extends AutomataState {}
 
-class Level222 extends State {}
+class Level222 extends AutomataState {}
 
-class OnMove extends Event {}
+class OnMove extends AutomataEvent {}
 
-class OnMoveToFirstLevel extends Event {}
+class OnMoveToFirstLevel extends AutomataEvent {}
 
 // https://stately.ai/viz/c722fba1-4f48-449f-8734-ad0d5c0c709a
 StateMachine _createMachine() {
