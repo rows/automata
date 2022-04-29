@@ -37,29 +37,33 @@ class AutomataStateBuilderFactory {
 /// class _Failure extends AutomataState {}
 /// class _Success extends AutomataState {}
 ///
-/// final a = AutomataStateBuilder(
-///   machine: stateMachine,
-///   stateBuilders: {
-///     _Failure: AutomataStateBuilderFactory((context) {
-///       return ElevatedButton(
-///         onPressed: () => _machineNotifier.send(_OnRetry()),
-///         child: const Text('Retry'),
-///       );
-///     }),
-///     _Success: AutomataStateBuilderFactory((context) {
-///       return ListView(
-///         children: _machineNotifier.value
-///             .map(
-///               (e) => Text(e.title),
-///             )
-///             .toList(),
-///       );
-///     }),
-///   },
-///   defaultBuilder: ((context) {
-///     return const Text('Loading');
-///   }),
-/// );
+/// Widget build(BuildContext context) {
+///   return Center(
+///     child: AutomataStateBuilder(
+///       machine: stateMachine,
+///       stateBuilders: {
+///         _Failure: AutomataStateBuilderFactory((context) {
+///           return ElevatedButton(
+///             onPressed: () => _machineNotifier.send(_OnRetry()),
+///             child: const Text('Retry'),
+///           );
+///         }),
+///         _Success: AutomataStateBuilderFactory((context) {
+///           return ListView(
+///             children: _machineNotifier.value
+///                 .map(
+///                   (e) => Text(e.title),
+///                 )
+///                 .toList(),
+///           );
+///         }),
+///       },
+///       defaultBuilder: ((context) {
+///         return const Text('Loading');
+///       }),
+///     ),
+///   );
+/// }
 /// ```
 class AutomataStateBuilder extends StatelessWidget {
   final Map<Type, AutomataStateBuilderFactory> stateBuilders;
