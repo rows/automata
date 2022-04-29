@@ -1,4 +1,5 @@
 import 'package:collection/collection.dart';
+import 'package:meta/meta.dart';
 
 import 'invoke_definition.dart';
 import 'state_machine_value.dart';
@@ -43,7 +44,8 @@ class StateNodeDefinition<S extends AutomataState> implements StateNode {
 
   /// Maps of [AutomataEvent]s to [TransitionDefinition] available for this
   /// [StateNodeDefinition].
-  final Map<Type, List<TransitionDefinition>> _eventTransitionsMap = {};
+  @internal
+  final Map<Type, List<TransitionDefinition>> eventTransitionsMap = {};
 
   InvokeDefinition? _invoke;
 
@@ -162,8 +164,8 @@ class StateNodeDefinition<S extends AutomataState> implements StateNode {
       type: type,
     );
 
-    _eventTransitionsMap[E] ??= <TransitionDefinition>[];
-    _eventTransitionsMap[E]!.add(onTransition);
+    eventTransitionsMap[E] ??= <TransitionDefinition>[];
+    eventTransitionsMap[E]!.add(onTransition);
   }
 
   /// Attach a Eventless [TransitionDefinition] to allow to transition from this
@@ -181,8 +183,8 @@ class StateNodeDefinition<S extends AutomataState> implements StateNode {
       actions: actions,
     );
 
-    _eventTransitionsMap[NullEvent] = _eventTransitionsMap[NullEvent] ?? [];
-    _eventTransitionsMap[NullEvent]!.add(onTransition);
+    eventTransitionsMap[NullEvent] = eventTransitionsMap[NullEvent] ?? [];
+    eventTransitionsMap[NullEvent]!.add(onTransition);
   }
 
   /// Sets callback that will be called right after machine entrys this State.
@@ -241,7 +243,7 @@ class StateNodeDefinition<S extends AutomataState> implements StateNode {
       return [];
     }
 
-    return _eventTransitionsMap[E] ?? [];
+    return eventTransitionsMap[E] ?? [];
   }
 
   /// Return all the [TransitionDefinition] for the given node and it's parents.

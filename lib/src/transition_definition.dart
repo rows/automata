@@ -72,6 +72,9 @@ class TransitionDefinition<S extends AutomataState, E extends AutomataEvent,
   /// List of side effect functions to be called on successful transition.
   final List<Action<E>>? actions;
 
+  /// Exposes the [Event] that triggers this transition.
+  Type get event => E;
+
   // First look for the target leaf within the compound root and only
   // afterwards fallback to search from root.
   late final StateNodeDefinition targetStateNode = (() {
