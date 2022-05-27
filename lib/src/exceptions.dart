@@ -1,5 +1,6 @@
 import '../automata.dart';
 
+/// Base Exception that all Automata's validations exceptions should implement.
 abstract class AutomataValidationException implements Exception {}
 
 /// [Exception] thrown when a [StateMachine] is defined without any
