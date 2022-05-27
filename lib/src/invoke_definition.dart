@@ -1,4 +1,5 @@
 import 'package:collection/collection.dart';
+import 'package:meta/meta.dart';
 
 import 'state_machine_value.dart';
 import 'state_node.dart';
@@ -24,13 +25,15 @@ class InvokeDefinition<S extends AutomataState, E extends AutomataEvent,
   ///
   /// See also:
   /// - [InvokeDefinition.onDone]
-  final Map<Type, TransitionDefinition> _onDoneTransitionsMap = {};
+  @internal
+  final Map<Type, TransitionDefinition> onDoneTransitionsMap = {};
 
   /// Failure transition.
   ///
   /// See also:
   /// - [InvokeDefinition.onError]
-  late final TransitionDefinition _onErrorTransition;
+  @internal
+  TransitionDefinition? onErrorTransition;
 
   /// Invoke's async callback.
   ///
@@ -61,7 +64,7 @@ class InvokeDefinition<S extends AutomataState, E extends AutomataEvent,
     List<Action<DoneInvokeEvent<_Result>>>? actions,
     GuardCondition<DoneInvokeEvent<_Result>>? condition,
   }) {
-    _onDoneTransitionsMap[Target] =
+    onDoneTransitionsMap[Target] =
         TransitionDefinition<S, DoneInvokeEvent<_Result>, Target>(
       sourceStateNode: sourceStateNode,
       targetState: Target,
@@ -74,7 +77,7 @@ class InvokeDefinition<S extends AutomataState, E extends AutomataEvent,
   void onError<Target extends AutomataState>({
     List<Action<ErrorEvent>>? actions,
   }) {
-    _onErrorTransition = TransitionDefinition<S, ErrorEvent, Target>(
+    onErrorTransition = TransitionDefinition<S, ErrorEvent, Target>(
       sourceStateNode: sourceStateNode,
       targetState: Target,
       actions: actions,
@@ -89,7 +92,7 @@ class InvokeDefinition<S extends AutomataState, E extends AutomataEvent,
 
       final doneInvokeEvent = DoneInvokeEvent<Result>(id: _id, data: result);
 
-      final matchedTransition = _onDoneTransitionsMap.values.firstWhereOrNull(
+      final matchedTransition = onDoneTransitionsMap.values.firstWhereOrNull(
         (element) {
           // ignore: avoid_dynamic_calls
           final dynamic condition = (element as dynamic).condition;
@@ -109,7 +112,7 @@ class InvokeDefinition<S extends AutomataState, E extends AutomataEvent,
 
       matchedTransition.trigger(value, doneInvokeEvent);
     } on Object catch (e) {
-      _onErrorTransition.trigger(
+      onErrorTransition?.trigger(
         value,
         PlatformErrorEvent(exception: e),
       );

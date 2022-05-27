@@ -43,6 +43,41 @@ class ValidateAtomicStates extends Validator<StateMachine> {
   }
 }
 
+/// Throws [InvalidInvokeDefinitionException] when:
+///   1. Invoke is defined in a terminal node
+///   2. There is no OnDone definition
+///   3. There is no OnError definition
+class ValidateInvokeDefinition extends Validator<StateNodeDefinition> {
+  const ValidateInvokeDefinition(StateNodeDefinition data) : super(data);
+
+  @override
+  void call() {
+    final invokeDefinition = data.invokeDefinition;
+
+    if (invokeDefinition == null) {
+      return;
+    }
+
+    if (data.stateNodeType == StateNodeType.terminal) {
+      throw const InvalidInvokeDefinitionException(
+        "Can't define a invoke in a terminal node",
+      );
+    }
+
+    if (invokeDefinition.onDoneTransitionsMap.isEmpty) {
+      throw const InvalidInvokeDefinitionException(
+        'Missing a one OnDone transition',
+      );
+    }
+
+    if (invokeDefinition.onErrorTransition == null) {
+      throw const InvalidInvokeDefinitionException(
+        'Missing OnError transition',
+      );
+    }
+  }
+}
+
 /// Throws [UnreachableTransitionException] when a node defines
 /// two transitions without conditions to the same [Event]. Only the first
 /// one will ever be matched and therefore it's the only valid.
