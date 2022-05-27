@@ -1,3 +1,5 @@
+import 'package:collection/collection.dart';
+
 import 'state_machine_value.dart';
 import 'state_node.dart';
 import 'transition_definition.dart';
@@ -22,7 +24,7 @@ class InvokeDefinition<S extends AutomataState, E extends AutomataEvent,
   ///
   /// See also:
   /// - [InvokeDefinition.onDone]
-  late final TransitionDefinition _onDoneTransition;
+  final Map<Type, TransitionDefinition> _onDoneTransitionsMap = {};
 
   /// Failure transition.
   ///
@@ -57,12 +59,14 @@ class InvokeDefinition<S extends AutomataState, E extends AutomataEvent,
   /// Create the [InvokeDefinition]'s onDone [TransitionDefinition].
   void onDone<Target extends AutomataState, _Result>({
     List<Action<DoneInvokeEvent<_Result>>>? actions,
+    GuardCondition<DoneInvokeEvent<_Result>>? condition,
   }) {
-    _onDoneTransition =
+    _onDoneTransitionsMap[Target] =
         TransitionDefinition<S, DoneInvokeEvent<_Result>, Target>(
       sourceStateNode: sourceStateNode,
       targetState: Target,
       actions: actions,
+      condition: condition,
     );
   }
 
@@ -83,10 +87,27 @@ class InvokeDefinition<S extends AutomataState, E extends AutomataEvent,
     try {
       final result = await _callback(e);
 
-      _onDoneTransition.trigger(
-        value,
-        DoneInvokeEvent<Result>(id: _id, data: result),
+      final doneInvokeEvent = DoneInvokeEvent<Result>(id: _id, data: result);
+
+      final matchedTransition = _onDoneTransitionsMap.values.firstWhereOrNull(
+        (element) {
+          // ignore: avoid_dynamic_calls
+          final dynamic condition = (element as dynamic).condition;
+
+          // ignore: avoid_dynamic_calls
+          if (condition != null && condition(doneInvokeEvent) == false) {
+            return false;
+          }
+
+          return true;
+        },
       );
+
+      if (matchedTransition == null) {
+        return;
+      }
+
+      matchedTransition.trigger(value, doneInvokeEvent);
     } on Object catch (e) {
       _onErrorTransition.trigger(
         value,
