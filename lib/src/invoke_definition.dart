@@ -1,3 +1,6 @@
+import 'package:collection/collection.dart';
+import 'package:meta/meta.dart';
+
 import 'state_machine_value.dart';
 import 'state_node.dart';
 import 'transition_definition.dart';
@@ -22,13 +25,15 @@ class InvokeDefinition<S extends AutomataState, E extends AutomataEvent,
   ///
   /// See also:
   /// - [InvokeDefinition.onDone]
-  late final TransitionDefinition _onDoneTransition;
+  @internal
+  final Map<Type, TransitionDefinition> onDoneTransitionsMap = {};
 
   /// Failure transition.
   ///
   /// See also:
   /// - [InvokeDefinition.onError]
-  late final TransitionDefinition _onErrorTransition;
+  @internal
+  TransitionDefinition? onErrorTransition;
 
   /// Invoke's async callback.
   ///
@@ -57,12 +62,14 @@ class InvokeDefinition<S extends AutomataState, E extends AutomataEvent,
   /// Create the [InvokeDefinition]'s onDone [TransitionDefinition].
   void onDone<Target extends AutomataState, _Result>({
     List<Action<DoneInvokeEvent<_Result>>>? actions,
+    GuardCondition<DoneInvokeEvent<_Result>>? condition,
   }) {
-    _onDoneTransition =
+    onDoneTransitionsMap[Target] =
         TransitionDefinition<S, DoneInvokeEvent<_Result>, Target>(
       sourceStateNode: sourceStateNode,
       targetState: Target,
       actions: actions,
+      condition: condition,
     );
   }
 
@@ -70,7 +77,7 @@ class InvokeDefinition<S extends AutomataState, E extends AutomataEvent,
   void onError<Target extends AutomataState>({
     List<Action<ErrorEvent>>? actions,
   }) {
-    _onErrorTransition = TransitionDefinition<S, ErrorEvent, Target>(
+    onErrorTransition = TransitionDefinition<S, ErrorEvent, Target>(
       sourceStateNode: sourceStateNode,
       targetState: Target,
       actions: actions,
@@ -83,12 +90,29 @@ class InvokeDefinition<S extends AutomataState, E extends AutomataEvent,
     try {
       final result = await _callback(e);
 
-      _onDoneTransition.trigger(
-        value,
-        DoneInvokeEvent<Result>(id: _id, data: result),
+      final doneInvokeEvent = DoneInvokeEvent<Result>(id: _id, data: result);
+
+      final matchedTransition = onDoneTransitionsMap.values.firstWhereOrNull(
+        (element) {
+          // ignore: avoid_dynamic_calls
+          final dynamic condition = (element as dynamic).condition;
+
+          // ignore: avoid_dynamic_calls
+          if (condition != null && condition(doneInvokeEvent) == false) {
+            return false;
+          }
+
+          return true;
+        },
       );
+
+      if (matchedTransition == null) {
+        return;
+      }
+
+      matchedTransition.trigger(value, doneInvokeEvent);
     } on Object catch (e) {
-      _onErrorTransition.trigger(
+      onErrorTransition?.trigger(
         value,
         PlatformErrorEvent(exception: e),
       );

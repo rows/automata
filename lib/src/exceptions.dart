@@ -1,15 +1,18 @@
 import '../automata.dart';
 
+/// Base Exception that all Automata's validations exceptions should implement.
+abstract class AutomataValidationException implements Exception {}
+
 /// [Exception] thrown when a [StateMachine] is defined without any
 /// atomic state node.
-class NoAtomicStateNodeException implements Exception {
+class NoAtomicStateNodeException implements AutomataValidationException {
   @override
   String toString() => 'No atomic nodes in this state machine';
 }
 
 /// [Exception] thrown when a node already has a transition for a given
 /// event without condition.
-class UnreachableTransitionException implements Exception {
+class UnreachableTransitionException implements AutomataValidationException {
   final Type event;
 
   const UnreachableTransitionException(this.event);
@@ -18,9 +21,19 @@ class UnreachableTransitionException implements Exception {
   String toString() => 'The transition with Event $event is not reachable.';
 }
 
+/// [Exception] thrown when a invoke definition is not valid.
+class InvalidInvokeDefinitionException implements AutomataValidationException {
+  final String message;
+
+  const InvalidInvokeDefinitionException(this.message);
+
+  @override
+  String toString() => message;
+}
+
 /// [Exception] thrown when a node already has a child node for the given
 /// [State].
-class DuplicateStateException implements Exception {
+class DuplicateStateException implements AutomataValidationException {
   final Type state;
 
   const DuplicateStateException(this.state);
@@ -32,7 +45,7 @@ class DuplicateStateException implements Exception {
 
 /// [Exception] thrown when onDone is placed in a state that doesnt have any
 /// terminal child.
-class InvalidOnDoneCallbackException implements Exception {
+class InvalidOnDoneCallbackException implements AutomataValidationException {
   final Type state;
   final StateNodeType stateNodeType;
 
@@ -62,7 +75,7 @@ class InvalidOnDoneCallbackException implements Exception {
 
 /// [Exception] thrown when a node already has a child node for the given
 /// [State].
-class UnreachableInitialStateException implements Exception {
+class UnreachableInitialStateException implements AutomataValidationException {
   final Type currentState;
   final Type initialState;
 

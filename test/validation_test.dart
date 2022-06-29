@@ -2,9 +2,23 @@ import 'package:automata/src/exceptions.dart';
 import 'package:automata/src/state_machine.dart';
 import 'package:automata/src/types.dart';
 import 'package:automata/src/validators/extensions.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:test/test.dart';
 
+class _MockSrcCallbackFunction extends Mock {
+  Future<void> call(AutomataEvent e);
+}
+
 void main() {
+  setUpAll(() {
+    registerFallbackValue(
+      const DoneInvokeEvent<void>(
+        id: 'fetchUser',
+        data: null,
+      ),
+    );
+  });
+
   group('initial state', () {
     test('should have a reachable initial state', () {
       expect(
@@ -198,7 +212,7 @@ void main() {
 
       expect(
         machine.validate,
-        throwsA(isA<Exception>()),
+        throwsA(isA<NoAtomicStateNodeException>()),
       );
     });
 
@@ -228,6 +242,115 @@ void main() {
               ..state<_StateB>(type: StateNodeType.terminal)
               ..state<_StateC>(type: StateNodeType.parallel),
           ),
+      );
+
+      expect(
+        machine.validate,
+        returnsNormally,
+      );
+    });
+  });
+
+  group('invoke definition', () {
+    test('should throw if invoke node is terminal', () {
+      final invokeSrcCallback = _MockSrcCallbackFunction();
+      when(() => invokeSrcCallback(any())).thenAnswer((_) async => null);
+
+      final machine = StateMachine.create(
+        (g) => g
+          ..initial<_StateA>()
+          ..state<_StateA>(
+            type: StateNodeType.terminal,
+            builder: (b) => b
+              ..invoke<void>(
+                builder: (b) => b
+                  ..id('fetchUser')
+                  ..src(invokeSrcCallback)
+                  ..onDone<_StateB, void>()
+                  ..onError<_StateC>(),
+              ),
+          )
+          ..state<_StateB>()
+          ..state<_StateC>(),
+      );
+
+      expect(
+        machine.validate,
+        throwsA(isA<InvalidInvokeDefinitionException>()),
+      );
+    });
+
+    test('should throw if no onDone definition is found', () {
+      final invokeSrcCallback = _MockSrcCallbackFunction();
+      when(() => invokeSrcCallback(any())).thenAnswer((_) async => null);
+
+      final machine = StateMachine.create(
+        (g) => g
+          ..initial<_StateA>()
+          ..state<_StateA>(
+            builder: (b) => b
+              ..invoke<void>(
+                builder: (b) => b
+                  ..id('fetchUser')
+                  ..src(invokeSrcCallback)
+                  ..onError<_StateB>(),
+              ),
+          )
+          ..state<_StateB>()
+          ..state<_StateC>(),
+      );
+
+      expect(
+        machine.validate,
+        throwsA(isA<InvalidInvokeDefinitionException>()),
+      );
+    });
+
+    test('should throw if no onError definition is found', () {
+      final invokeSrcCallback = _MockSrcCallbackFunction();
+      when(() => invokeSrcCallback(any())).thenAnswer((_) async => null);
+
+      final machine = StateMachine.create(
+        (g) => g
+          ..initial<_StateA>()
+          ..state<_StateA>(
+            builder: (b) => b
+              ..invoke<void>(
+                builder: (b) => b
+                  ..id('fetchUser')
+                  ..src(invokeSrcCallback)
+                  ..onDone<_StateB, void>(),
+              ),
+          )
+          ..state<_StateB>()
+          ..state<_StateC>(),
+      );
+
+      expect(
+        machine.validate,
+        throwsA(isA<InvalidInvokeDefinitionException>()),
+      );
+    });
+
+    test('should not throw if both onDone and onError are defined', () {
+      final invokeSrcCallback = _MockSrcCallbackFunction();
+      when(() => invokeSrcCallback(any())).thenAnswer((_) async => null);
+
+      final machine = StateMachine.create(
+        (g) => g
+          ..initial<_StateA>()
+          ..state<_StateA>(
+            builder: (b) => b
+              ..invoke<void>(
+                builder: (b) => b
+                  ..id('fetchUser')
+                  ..src(invokeSrcCallback)
+                  ..onDone<_StateB, void>()
+                  ..onError<_StateC>(),
+              ),
+          )
+          ..state<_StateB>()
+          ..state<_StateC>(),
       );
 
       expect(

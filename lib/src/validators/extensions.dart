@@ -9,6 +9,8 @@ import 'validators.dart';
 extension StateMachineValidator on StateMachine {
   /// Kick start validation by invoking validate on the rootNode, which will
   /// then traverse the statechart invoking validate on all nodes.
+  ///
+  /// If any error is found, an [AutomataValidationException] will be thrown.
   void validate() {
     final _validators = [
       ValidateAtomicStates(this),
@@ -32,6 +34,7 @@ extension StateNodeDefinitionValidator on StateNodeDefinition {
     final _validators = [
       ValidateUnreachableTransitions(this),
       ValidateInvalidOnDoneCallback(this),
+      ValidateInvokeDefinition(this),
     ];
 
     for (final validator in _validators) {

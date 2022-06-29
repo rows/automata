@@ -48,7 +48,10 @@ class StateNodeDefinition<S extends AutomataState> implements StateNode {
   @internal
   final Map<Type, List<TransitionDefinition>> eventTransitionsMap = {};
 
-  InvokeDefinition? _invoke;
+  /// Optional invoke definition.
+  /// Used to call external async services.
+  @internal
+  InvokeDefinition? invokeDefinition;
 
   /// Action invoked on entry this [StateNodeDefinition].
   OnEntryAction? _onEntryAction;
@@ -220,8 +223,8 @@ class StateNodeDefinition<S extends AutomataState> implements StateNode {
     E event,
   ) {
     _onEntryAction?.call(event);
-    if (_invoke != null) {
-      _invoke?.execute(value, event);
+    if (invokeDefinition != null) {
+      invokeDefinition?.execute(value, event);
     }
   }
 
@@ -290,9 +293,11 @@ class StateNodeDefinition<S extends AutomataState> implements StateNode {
   /// Attach a [InvokeDefinition] to this node.
   @override
   void invoke<Result>({InvokeBuilder? builder}) {
-    _invoke = InvokeDefinition<S, AutomataEvent, Result>(sourceStateNode: this);
+    invokeDefinition = InvokeDefinition<S, AutomataEvent, Result>(
+      sourceStateNode: this,
+    );
 
-    builder?.call(_invoke!);
+    builder?.call(invokeDefinition!);
   }
 
   @override
