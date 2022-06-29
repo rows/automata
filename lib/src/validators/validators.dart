@@ -60,13 +60,13 @@ class ValidateInvokeDefinition extends Validator<StateNodeDefinition> {
 
     if (data.stateNodeType == StateNodeType.terminal) {
       throw const InvalidInvokeDefinitionException(
-        "Can't define a invoke in a terminal node",
+        "Can't define an invoke in a terminal node",
       );
     }
 
     if (invokeDefinition.onDoneTransitionsMap.isEmpty) {
       throw const InvalidInvokeDefinitionException(
-        'Missing a one OnDone transition',
+        'Missing at least one OnDone transition',
       );
     }
 
